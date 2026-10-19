@@ -1,13 +1,16 @@
 """Figuras e tabelas derivadas de manifestos e resultados, sem ajustar modelos."""
 from pathlib import Path
+import json
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from .dados import carregar_manifesto, caminho_seguro
 from .preprocessamento import ler_rgb
+from .configuracao import sha256_file
 
 CORES = ["#2563eb", "#ea580c"]
 NOMES = {0: "Livre", 1: "Ocupada"}
@@ -63,3 +66,71 @@ def explorar(config):
     fig.suptitle("Exemplos de treino — CNRPark+EXT (CNR-EXT)")
     fig.tight_layout()
     salvar_figura(fig, base / "figuras/exemplos_treino.png")
+
+
+def resultados_verificados(config):
+    base = Path(config["results_dir"])
+    evaluation = json.loads((base / "metricas/avaliacao.json").read_text(encoding="utf-8"))
+    if sha256_file(base / "metricas/teste.csv") != evaluation["test_table_sha256"]:
+        raise ValueError("Tabela de teste alterada depois da avaliacao")
+    for name, digest in evaluation["prediction_sha256"].items():
+        if sha256_file(base / "predicoes" / name) != digest:
+            raise ValueError("Predicoes alteradas depois da avaliacao")
+    return evaluation
+
+
+def figuras(config):
+    estilo()
+    evaluation = resultados_verificados(config)
+    base = Path(config["results_dir"])
+    metrics = pd.read_csv(base / "metricas/teste.csv")
+    climate = pd.read_csv(base / "metricas/clima.csv")
+    names = metrics.descriptor.tolist()
+    fig, ax = plt.subplots(figsize=(8, 3.6))
+    x = np.arange(len(metrics))
+    ax.bar(x - .18, metrics.accuracy, .36, label="Acurácia", color=CORES[0])
+    ax.bar(x + .18, metrics.f1_macro, .36, label="F1 macro", color=CORES[1])
+    ax.set(xticks=x, xticklabels=names, ylim=(0, 1.1), ylabel="Escore", title="Comparação no teste congelado")
+    ax.legend(loc="lower right")
+    for i, value in enumerate(metrics.f1_macro):
+        ax.text(i + .18, value + .015, f"{value:.3f}", ha="center", fontsize=8)
+    fig.tight_layout()
+    salvar_figura(fig, base / "figuras/comparacao.png")
+    pivot = climate.pivot(index="weather", columns="descriptor", values="f1_macro").reindex(columns=names)
+    fig, ax = plt.subplots(figsize=(9, 3.6))
+    pivot.plot.bar(ax=ax, rot=0, ylim=(0, 1.15))
+    ax.set(xlabel="Clima", ylabel="F1 macro", title="Desagregação por clima (sem ajuste de modelos)")
+    ax.legend(fontsize=8, ncol=3, loc="lower right")
+    fig.tight_layout()
+    salvar_figura(fig, base / "figuras/clima.png")
+    winner = evaluation["selected"]
+    prediction = pd.read_csv(base / "predicoes" / f"{winner}.csv", dtype={"id": str})
+    matrix = pd.crosstab(prediction.label, prediction.predicted).reindex(index=[0, 1], columns=[0, 1], fill_value=0).to_numpy()
+    normalized = matrix / matrix.sum(axis=1, keepdims=True)
+    fig, axes = plt.subplots(1, 2, figsize=(8, 3.5))
+    for ax, values, title in zip(axes, (matrix, normalized), ("Contagens", "Por classe verdadeira")):
+        ax.imshow(values, cmap="Blues", vmin=0, vmax=np.max(values))
+        ax.set(xticks=[0, 1], yticks=[0, 1], xticklabels=["Livre", "Ocupada"],
+               yticklabels=["Livre", "Ocupada"], xlabel="Previsão", ylabel="Verdadeiro", title=title)
+        for i in range(2):
+            for j in range(2):
+                text = f"{values[i, j]:.1%}" if values.dtype.kind == "f" else str(values[i, j])
+                ax.text(j, i, text, ha="center", va="center", color="white" if values[i, j] > values.max() / 2 else "black")
+    fig.suptitle(f"Matriz de confusão — {winner} (selecionado na validação)")
+    fig.tight_layout()
+    salvar_figura(fig, base / "figuras/confusao_vencedor.png")
+    errors = prediction[prediction.label != prediction.predicted]
+    chosen = pd.concat([g.sample(min(6, len(g)), random_state=config["seed"])
+                        for _, g in errors.groupby("label")], ignore_index=True) if len(errors) else errors.copy()
+    chosen.to_csv(base / "metricas/erros_selecionados.csv", index=False)
+    fig, axes = plt.subplots(3, 4, figsize=(10, 8))
+    for ax in axes.flat:
+        ax.axis("off")
+    for ax, row in zip(axes.flat, chosen.itertuples(index=False)):
+        ax.imshow(ler_rgb(caminho_seguro(config["data_root"], row.path)))
+        ax.set_title(f"Real: {NOMES[row.label]} | Prev.: {NOMES[row.predicted]}\n{row.weather}, câmera {row.camera}", fontsize=8)
+    if chosen.empty:
+        axes.flat[0].text(.1, .5, "Nenhum erro neste teste.")
+    fig.suptitle(f"Erros ilustrativos — {winner}; origem: CNRPark+EXT")
+    fig.tight_layout()
+    salvar_figura(fig, base / "figuras/erros_vencedor.png")
