@@ -35,6 +35,13 @@ Medir tempo total de extração por representação, ajuste incluindo escaloname
 em lote incluindo escalonamento. Reportar ms/imagem; não confundir extração com inferência.
 Tempos dependem da máquina, cache e carga. Uma execução não fornece intervalo de confiança.
 
+As revisões do relatório interpretam diferenças de composição entre validação e teste usando
+o manifesto e as predições congeladas. Não introduzem novos ajustes. A hipótese sobre
+iluminação foi explicitada posteriormente para discussão exploratória, sem registro prévio
+ou teste causal. Intervalos de confiança ficam como extensão: um eventual bootstrap deve
+considerar os agrupamentos de imagens por captura/dia; reamostragem ingênua por imagem
+não representa a dependência presente no dataset.
+
 A análise visual seleciona até seis erros de cada direção do vencedor (até 12), com semente
 fixa. É ilustrativa; não estima prevalência de causas. O custo de uma vaga ocupada prevista
 como livre deve ser discutido separadamente.

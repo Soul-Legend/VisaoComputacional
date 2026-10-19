@@ -12,15 +12,21 @@ chuva também modificam essas mesmas pistas. O desafio deste trabalho é reconhe
 da vaga apesar dessas variações.
 
 Para estudar o problema, partimos de uma tarefa bem delimitada: receber uma imagem já
-recortada de uma vaga e classificá-la como **livre (0)** ou **ocupada (1)**. A localização das
+recortada de uma vaga e classificá-la como livre (0) ou ocupada (1). A localização das
 vagas na imagem completa é considerada conhecida. Assim, podemos concentrar a análise na
 forma de representar visualmente cada recorte e na qualidade da classificação obtida.
 
 Comparamos três representações: HSV, que descreve cores; LBP, que resume texturas; e HOG,
 que representa orientações de gradientes. Também avaliamos a combinação dos três descritores.
-Em todos os casos, usamos o mesmo classificador, uma SVM linear. Isso permite investigar a
-seguinte pergunta: **qual representação é escolhida na validação e como ela se comporta em
-imagens de outros dias?**
+Em todos os casos, usamos o mesmo classificador, uma SVM linear. A pergunta central é:
+**como descritores de cor, textura e gradientes se comparam na classificação de ocupação
+de vagas, considerando desempenho, dimensionalidade e custo computacional?**
+
+Para organizar a discussão, formulamos a hipótese exploratória de que LBP e HOG sejam
+menos sensíveis às mudanças de iluminação do que histogramas globais de cor. Reunir essas
+informações também pode favorecer a classificação em outros dias. Essa expectativa não
+foi registrada antes dos experimentos, e o protocolo não isola o efeito da iluminação;
+portanto, os resultados permitem discuti-la, mas não confirmá-la causalmente.
 
 ### Visão geral do experimento
 
@@ -29,10 +35,10 @@ e teste. O treino serve para aprender o classificador; a validação, para escol
 e o teste, para avaliar a escolha em dados reservados. Os descritores foram comparados nas
 mesmas imagens, seguindo um protocolo definido antes da consulta ao teste.
 
-O modelo selecionado foi **{{vencedor}} + SVM**, com C={{c}}. Seu F1 macro foi **{{val_f1}}**
-na validação e **{{teste_f1}}** no teste, com acurácia de **{{teste_acc}}**. Como referência,
+O modelo selecionado foi **{{vencedor}} + SVM, com C={{c}}**. Seu F1 macro foi {{val_f1}}
+na validação e {{teste_f1}} no teste, com acurácia de {{teste_acc}}. Como referência,
 um classificador que sempre prevê a classe mais frequente do treino obteve F1 macro de
-**{{dummy_f1}}**. As seções seguintes explicam como esses números foram obtidos e o que
+{{dummy_f1}}. As seções seguintes explicam como esses números foram obtidos e o que
 eles permitem concluir.
 
 Primeiro, apresentamos os métodos com exemplos visuais. Em seguida, descrevemos os dados e
@@ -56,8 +62,8 @@ mudanças de iluminação. Sua finalidade é explicar os métodos.
 
 ### 2.1. HSV: descrever a distribuição das cores
 
-O espaço HSV separa três propriedades: **H (matiz)** identifica a tonalidade; **S (saturação)**
-indica o quanto a cor se afasta do cinza; e **V (valor)** representa sua intensidade. Na
+O espaço HSV separa três propriedades: H (matiz) identifica a tonalidade; S (saturação)
+indica o quanto a cor se afasta do cinza; e V (valor) representa sua intensidade. Na
 Figura 1, os canais S e V aparecem em cinza: quanto mais claro o pixel, maior o valor do canal.
 
 ![Canais e histogramas HSV]({{ilustracoes}}/metodo_hsv.png)
@@ -72,7 +78,7 @@ ser interpretado junto de S.
 
 Para gerar o descritor, dividimos os valores de cada canal em 16 intervalos, chamados bins,
 e contamos a fração de pixels em cada um. Cada histograma soma um. Ao reunir os três,
-obtemos **48 características**. H usa o intervalo [0,180) do OpenCV, e S e V usam [0,256).
+obtemos 48 características. H usa o intervalo [0,180) do OpenCV, e S e V usam [0,256).
 
 Essa representação é compacta, mas perde a posição das cores: imagens diferentes podem
 ter histogramas parecidos. A próxima representação procura informação na textura local.
@@ -83,7 +89,7 @@ ter histogramas parecidos. A próxima representação procura informação na te
 
 Uma textura descreve como as intensidades variam em pequenas regiões. Mesmo sem considerar
 a cor, asfalto, vidros, carroceria e detalhes do veículo podem produzir padrões locais
-diferentes. O **Local Binary Patterns (LBP)** explora essa informação comparando cada pixel
+diferentes. O Local Binary Patterns (LBP) explora essa informação comparando cada pixel
 com seus vizinhos [3].
 
 Primeiro, convertemos a imagem para cinza. Para cada pixel, comparamos sua intensidade com
@@ -100,7 +106,8 @@ As cores indicam códigos locais; não identificam automaticamente carro ou pavi
 O mapa conserva a posição de cada código e ajuda a enxergar onde os padrões mudam. No
 exemplo ocupado, é possível acompanhar estruturas do veículo. Já o vetor entregue ao
 classificador contém somente a frequência dos códigos: contamos quantas vezes cada um
-aparece e normalizamos o histograma para soma um. O resultado tem **dez características**.
+aparece e normalizamos o histograma para soma um. São P + 2 = 8 + 2 = 10 bins,
+portanto dez características.
 
 Os gráficos mostram que a distribuição desses padrões difere entre os dois recortes.
 Isso ilustra a informação disponível ao modelo, mas dois exemplos não bastam para afirmar
@@ -116,20 +123,18 @@ Para preservar mais informação sobre a organização dos contornos, avaliamos 
 ### 2.3. HOG: representar contornos e suas orientações
 
 O gradiente mede a mudança de intensidade entre pixels próximos. Mudanças fortes aparecem
-em bordas, como nos limites da carroceria e dos vidros. O **Histograms of Oriented Gradients
-(HOG)** resume a direção dessas mudanças em pequenas regiões da imagem [2].
+em bordas, como nos limites da carroceria e dos vidros. O Histograms of Oriented Gradients
+(HOG) resume a direção dessas mudanças em pequenas regiões da imagem [2].
 
 ![Gradientes e representação HOG]({{ilustracoes}}/metodo_hog.png)
 
 Figura 3. Recortes originais, intensidade dos gradientes e orientações por célula.
 O contraste foi realçado com a mesma escala nos dois exemplos, somente para visualização.
 
-Na vaga ocupada, os contornos do carro introduzem várias orientações. A vaga livre também
-contém gradientes, vindos de marcações e outros elementos da cena. O HOG organiza essas
-respostas em células 8 × 8, com nove orientações, e normaliza blocos de 2 × 2 células pelo
-método L2-Hys. Em imagens de 128 × 128, o vetor final possui **8.100 características**.
-O desenho da figura resume orientações por célula; o vetor usado no treinamento inclui a
-normalização dos blocos e não deve ser confundido com esse desenho.
+Os contornos do carro produzem várias orientações; marcações também geram gradientes na
+vaga livre. Usamos células 8 × 8, nove orientações, blocos 2 × 2 e L2-Hys. Para recortes
+128 × 128, são 8.100 características. O desenho mostra orientações por célula; o vetor
+do treinamento inclui a normalização dos blocos.
 
 ### 2.4. Das características à classificação
 
@@ -137,29 +142,29 @@ normalização dos blocos e não deve ser confundido com esse desenho.
 
 Figura 4. O mesmo fluxo é usado para cada descritor e para sua combinação.
 
-A SVM aprende uma fronteira que separa exemplos livres e ocupados no espaço das
-características [4]. Antes do ajuste, o StandardScaler padroniza cada componente com a
-média e o desvio do treino. O parâmetro C controla a penalização de erros durante o ajuste.
-Usamos LinearSVC, com regularização L2 e perda quadrática hinge.
+Manter a SVM linear concentra a comparação no efeito dos descritores [4]. É uma escolha
+de custo controlado para HOG e HSV + LBP + HOG, com vetores de alta dimensão. Os resultados
+continuam condicionados a esse classificador, sem estabelecer superioridade sob qualquer modelo.
 
-Na combinação, reunimos HSV, LBP e HOG em um vetor de **8.158 componentes**. A hipótese
-é que cor, textura e contornos forneçam informações complementares. A padronização ocorre
-por componente, sem pesos específicos para os três blocos. Seu benefício será verificado
-pelos experimentos, junto do aumento de dimensão e custo.
+StandardScaler usa estatísticas do treino. LinearSVC emprega regularização L2, perda
+quadrática hinge e C para penalizar erros. RBF poderia melhorar o ajuste, mas acrescentaria
+a busca de gamma e a comparação de kernels, ampliando o escopo além dos descritores.
+
+HSV + LBP + HOG soma 8.158 componentes, padronizados individualmente e sem pesos por bloco.
 
 <!-- PAGEBREAK -->
 
 ## 3. Dataset e preparação dos dados
 
 O CNRPark+EXT foi disponibilizado por Amato e colaboradores para estudar a ocupação de
-vagas [1]. Utilizamos apenas sua extensão **CNR-EXT**, composta por 144.965 recortes de nove
+vagas [1]. Utilizamos apenas sua extensão CNR-EXT, composta por 144.965 recortes de nove
 câmeras, capturados em 23 dias. As imagens estão organizadas por clima: SUNNY (ensolarado),
 OVERCAST (nublado) e RAINY (chuvoso). As listas dos autores fornecem os rótulos e as
 partições de treino, validação e teste.
 
-Antes da amostragem, conferimos todas as imagens dessas listas. Encontramos **{{ilegíveis}}
-imagens ilegíveis** e excluímos **{{conflitos}} registros com pixels idênticos e rótulos
-conflitantes**. Foram removidas **{{duplicatas}} duplicatas adicionais**. A identidade dos
+Antes da amostragem, conferimos todas as imagens dessas listas. Encontramos {{ilegíveis}}
+imagens ilegíveis e excluímos {{conflitos}} registros com pixels idênticos e rótulos
+conflitantes. Foram removidas {{duplicatas}} duplicatas adicionais. A identidade dos
 arquivos foi verificada pelo conteúdo e pelos pixels decodificados, incluindo suas dimensões.
 Essa limpeza ocorreu antes do treinamento.
 
@@ -199,14 +204,14 @@ elementos encobrem partes das vagas; e sombras podem alterar a aparência do pav
 Essas variações ajudam a compreender por que descritores diferentes podem cometer erros
 diferentes.
 
-Todas as imagens são redimensionadas para **128 × 128** antes da extração, para manter a
+Todas as imagens são redimensionadas para 128 × 128 antes da extração, para manter a
 dimensão dos vetores constante. A leitura converte explicitamente BGR para RGB. HOG e LBP
 recebem a versão em cinza inteiro; HSV utiliza a imagem colorida. Não aplicamos aumento
 de dados ou transformações aleatórias.
 
-Na amostra final, treino e teste compartilham **{{sobreposicao_camera}} câmeras** e
-**{{sobreposicao_slot}} identificadores de vagas**. Por outro lado, há **{{sobreposicao_date}}
-datas** e **{{sobreposicao_capture}} capturas de câmera e horário em comum** entre eles.
+Na amostra final, treino e teste compartilham {{sobreposicao_camera}} câmeras e
+{{sobreposicao_slot}} identificadores de vagas. Por outro lado, há {{sobreposicao_date}}
+datas e {{sobreposicao_capture}} capturas de câmera e horário em comum entre eles.
 Portanto, o experimento avalia dias diferentes das mesmas câmeras e vagas.
 
 Essa distinção orienta a leitura dos resultados. A separação por dias reduz a proximidade
@@ -221,9 +226,9 @@ descritas, sem demonstrar essa generalização mais ampla.
 
 ### Aprender, escolher e avaliar
 
-Cada configuração foi ajustada somente nas **{{n_treino}} imagens de treino**. O StandardScaler
+Cada configuração foi ajustada somente nas {{n_treino}} imagens de treino. O StandardScaler
 aprende a média e o desvio nesse conjunto e apenas transforma validação e teste. Para cada
-representação, avaliamos quatro valores de C: **0,01; 0,1; 1; 10**. Os parâmetros dos
+representação, avaliamos quatro valores de C: 0,01; 0,1; 1; 10. Os parâmetros dos
 descritores permaneceram fixos, conforme a seção 2.
 
 A escolha considera o maior F1 macro na validação, arredondado a quatro casas decimais.
@@ -239,13 +244,13 @@ uma decisão que não observa a imagem.
 
 ### Como interpretar as métricas
 
-A **acurácia** é a fração total de previsões corretas. Ela oferece uma visão geral, mas
+A acurácia é a fração total de previsões corretas. Ela oferece uma visão geral, mas
 pode ocultar diferenças entre as classes. Por exemplo, prever sempre ocupada acerta muitos
 casos quando essa classe é predominante, embora nenhuma vaga livre seja reconhecida.
 
-A **precisão** de uma classe indica quantas de suas previsões estão corretas. O **recall**
-indica quantos exemplos reais dessa classe foram encontrados. O **F1** combina precisão
-e recall pela média harmônica. Por fim, o **F1 macro** calcula a média dos F1 das duas
+A precisão de uma classe indica quantas de suas previsões estão corretas. O recall
+indica quantos exemplos reais dessa classe foram encontrados. O F1 combina precisão
+e recall pela média harmônica. Por fim, o F1 macro calcula a média dos F1 das duas
 classes, atribuindo a elas o mesmo peso. Por esse motivo, ele foi adotado para a seleção.
 
 Nas matrizes de confusão, as linhas representam os rótulos reais e as colunas, as previsões.
@@ -269,25 +274,28 @@ repositório, junto dos registros de parâmetros e versões.
 
 ## 6. Resultados de validação e teste
 
-A Tabela 2 reúne todos os ajustes previstos. Ela mostra como cada representação respondeu
-à mudança de C e permite acompanhar a escolha feita antes da avaliação final.
+A Tabela 2 apresenta todos os ajustes e a escolha feita antes de abrir o teste.
 
 {{tabela_validacao}}
 
 Tabela 2. F1 macro na validação e tempo de ajuste, incluindo a padronização.
 
-A validação selecionou **{{vencedor}} + SVM**, com C={{c}} e F1 macro **{{val_f1}}**.
-LBP e a combinação ficaram muito próximos nessa etapa. Essa diferença pequena define a
-escolha pelo protocolo adotado, mas não demonstra superioridade estatística.
+A validação selecionou {{vencedor}} + SVM, C={{c}}, com F1 macro {{val_f1}}, quase
+empatado com HSV + LBP + HOG ({{val_f1_combinado}}), sem demonstração de superioridade estatística.
 
 {{tabela_teste}}
 
 Tabela 3. Avaliação nas mesmas {{n_teste}} imagens reservadas para teste.
 
-O modelo selecionado alcançou F1 macro **{{teste_f1}}** e acurácia **{{teste_acc}}**.
-O ganho de F1 macro sobre a referência majoritária foi **{{ganho_f1}}**. {{nota_ranking}}
-Essa mudança de ranking mostra que a ordenação observada na validação não se reproduz
-exatamente em outros dias. O teste permite observar essa diferença, sem redefinir a escolha.
+O modelo selecionado alcançou F1 macro {{teste_f1}} e acurácia {{teste_acc}}.
+O ganho de F1 macro sobre a referência majoritária foi {{ganho_f1}}. {{nota_ranking}}
+
+A validação tem {{ocupadas_validacao}} de vagas ocupadas e {{overcast_validacao}} de imagens
+nubladas, sem chuva; o teste, {{ocupadas_teste}} de ocupadas e {{rainy_teste}} de chuva.
+No teste, HSV + LBP + HOG supera LBP no sol ({{f1_combinado_sunny}} contra {{f1_lbp_sunny}})
+e na chuva ({{f1_combinado_rainy}} contra {{f1_lbp_rainy}}), mas não no nublado
+({{f1_combinado_overcast}} contra {{f1_lbp_overcast}}). Isso é compatível com uma contribuição
+complementar dos descritores nos dias avaliados; a composição não explica causalmente a mudança.
 
 <!-- PAGEBREAK -->
 
@@ -305,10 +313,10 @@ Tabela 4. Precisão (P), recall (R) e F1 por classe. Os suportes estão na Tabel
 
 Figura 8. Matriz do modelo selecionado: contagens e percentuais por classe verdadeira.
 
-O modelo classificou **{{ocupada_livre}} vagas ocupadas como livres** e **{{livre_ocupada}}
-livres como ocupadas**. O primeiro erro pode encaminhar alguém a uma vaga indisponível;
+O modelo classificou {{ocupada_livre}} vagas ocupadas como livres e {{livre_ocupada}}
+livres como ocupadas. O primeiro erro pode encaminhar alguém a uma vaga indisponível;
 o segundo pode ocultar uma oportunidade real. O recall da classe ocupada foi
-**{{recall_ocupada}}**. Mantivemos o limiar padrão, sem favorecer uma direção de erro.
+{{recall_ocupada}}. Mantivemos o limiar padrão, sem favorecer uma direção de erro.
 
 <!-- PAGEBREAK -->
 
@@ -319,22 +327,23 @@ o segundo pode ocultar uma oportunidade real. O recall da classe ocupada foi
 Tabela 5. Custo de cada configuração selecionada. O ajuste corresponde ao melhor C de
 cada representação; o tempo total da busca é maior.
 
-LBP descreve cada imagem com dez valores, enquanto HOG utiliza 8.100 e a combinação,
-8.158. Essa diferença ajuda a interpretar o compromisso entre capacidade de representação
-e custo. A extração da combinação recalcula os três descritores. Os tempos também
-dependem da máquina, do cache e da carga; uma medição menor em um caso não estabelece
-que ele será sempre mais rápido. A latência de uma aplicação precisaria incluir o fluxo completo.
+LBP descreve cada imagem com dez valores, HOG com 8.100 e HSV + LBP + HOG com 8.158.
+O vetor conjunto recalcula os três descritores. Ainda assim, sua extração medida foi menor
+que a de HOG isolado: {{tempo_combinado}} contra {{tempo_hog}} ms/imagem. Como há uma
+única medição por configuração e nenhuma estimativa de variabilidade, essa diferença não
+evidencia vantagem intrínseca de velocidade. Cache, carga e outras variações de execução
+são explicações possíveis, não causas verificadas. Uma comparação de eficiência precisaria
+de repetições em condições controladas; a latência de aplicação exigiria o fluxo completo.
 
 {{tabela_clima}}
 
 Tabela 6. F1 macro por clima, com número de exemplos livres e ocupados em cada grupo.
-Combin.: combinação de HSV, LBP e HOG.
 
 ![Resultados por clima]({{figuras}}/clima.png)
 
 Figura 9. Desempenho dos mesmos modelos congelados nas condições climáticas do teste.
 
-Para o modelo selecionado, o menor F1 macro ocorreu em **{{pior_clima}}**. A diferença
+Para o modelo selecionado, o menor F1 macro ocorreu em {{pior_clima}}. A diferença
 deve ser lida junto das contagens: os grupos têm tamanhos e proporções de classe diferentes.
 Além disso, clima, data, iluminação e composição das cenas variam juntos. Esses resultados
 descrevem onde o desempenho mudou, sem isolar a causa ou avaliar um clima inédito.
@@ -360,19 +369,28 @@ os parâmetros ou modificar o teste.
 ## 10. Discussão e conclusão
 
 O estudo mostrou que descritores clássicos conseguem distinguir vagas livres e ocupadas
-nas condições avaliadas. A configuração **{{vencedor}} + SVM, C={{c}}**, escolhida na
-validação, atingiu **{{teste_f1}} de F1 macro** no teste e superou a referência majoritária
-em **{{ganho_f1}}**. {{nota_ranking}}
+nas condições avaliadas. A configuração {{vencedor}} + SVM, C={{c}}, escolhida na
+validação, atingiu {{teste_f1}} de F1 macro no teste e superou a referência majoritária
+em {{ganho_f1}}. {{nota_ranking}}
 
-O contraste entre LBP e a combinação é o principal resultado da comparação. LBP oferece
-uma descrição compacta e foi suficiente para obter o melhor valor de validação. A combinação,
-por sua vez, apresentou o maior F1 macro no teste, com um vetor muito maior. Cor, textura
-e contornos podem se complementar, mas o benefício observado depende dos dados e deve
-ser considerado junto do custo. O experimento não permite escolher um vencedor universal.
+O contraste entre LBP e HSV + LBP + HOG é o principal resultado. LBP foi competitivo com
+um vetor compacto, enquanto reunir cor, textura e gradientes favoreceu o desempenho nos
+dias de teste. A validação é mais desbalanceada e concentra imagens nubladas; o teste
+inclui chuva e mais imagens de sol, condições nas quais o vetor conjunto teve F1 macro
+maior. Isso sugere que a complementaridade pode depender das cenas avaliadas, sem provar
+qual fator produziu a mudança. F1 macro não é linear: o total não deve ser obtido pela
+média ponderada dos F1 de cada clima.
+
+HOG e LBP superaram HSV no teste, resultado compatível com a hipótese exploratória.
+Como a iluminação não foi manipulada de forma controlada, não podemos atribuir essa
+vantagem especificamente à robustez luminosa. Desempenho, dimensão e custo devem ser
+considerados juntos; o experimento não define um vencedor universal.
 
 Há limitações importantes: as imagens vêm de um único estacionamento, com as mesmas
 câmeras e vagas nas partições; utilizamos uma amostragem e uma execução de tempo; e não
-calculamos intervalos de confiança. Também não investigamos outros kernels, parâmetros
+calculamos intervalos de confiança. Um bootstrap futuro deverá considerar a correlação
+entre imagens e os agrupamentos de captura/dia, em vez de assumir imagens independentes.
+Também não investigamos outros kernels, parâmetros
 dos descritores ou pesos para os blocos da combinação. As conclusões ficam restritas às
 configurações e ao subconjunto apresentados.
 
@@ -382,7 +400,7 @@ novos deverá ser planejada separadamente.
 
 ### Reprodução do estudo
 
-O README e docs/reproducao.md apresentam os comandos. O ambiente foi **{{ambiente}}**;
+O README e docs/reproducao.md apresentam os comandos. O ambiente foi {{ambiente}};
 o processador é identificado pelo sistema como {{processador}}. Os commits que registram
 o código de treinamento e avaliação são {{commit_treino}} e {{commit_teste}}, respectivamente.
 
