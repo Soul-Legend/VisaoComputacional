@@ -46,3 +46,11 @@ def test_desempate_dimensao_e_c():
                   {"validation_f1_macro": .90002, "dimension": 10, "C": 10},
                   {"validation_f1_macro": .90002, "dimension": 10, "C": .1}]
     assert min(candidates, key=chave_selecao) is candidates[2]
+
+
+def test_combinacao_preserva_ordem_e_valores():
+    config = carregar_config("configs/t1.yaml")
+    rgb = np.random.default_rng(1).integers(0, 256, (128, 128, 3), dtype=np.uint8)
+    combined = vetor(rgb, "combinado", config)
+    assert combined.shape == (8158,)
+    np.testing.assert_array_equal(combined, np.concatenate([vetor(rgb, n, config) for n in ("hsv", "lbp", "hog")]))

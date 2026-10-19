@@ -25,7 +25,9 @@ def assinatura(config):
 
 
 def vetor(rgb, name, config):
-    if name == "hsv":
+    if name == "combinado":
+        result = np.concatenate([vetor(rgb, part, config) for part in ("hsv", "lbp", "hog")])
+    elif name == "hsv":
         hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
         histograms = []
         for channel, upper in enumerate((180, 256, 256)):
