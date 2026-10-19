@@ -17,6 +17,11 @@ A amostragem segue cotas proporcionais por classe, câmera e clima em cada parti
 transferir imagens entre partições oficiais. Semente 42. Alvos: 7.000 / 1.500 / 1.500.
 Uma partição menor é usada integralmente. Classes e clima ausentes não são inventados.
 
+Em particular, a lista oficial `LABELS/val.txt` contém 6.346 imagens SUNNY, 12.301 OVERCAST
+e nenhuma RAINY. A ausência de chuva na validação antecede a limpeza e a amostragem do projeto.
+O treino e o teste oficiais contêm chuva. Portanto, a seleção por validação não mede diretamente
+o comportamento nessa condição, embora os modelos tenham imagens chuvosas no treino.
+
 A auditoria registra arquivos ilegíveis, dimensões, hashes de bytes e pixels decodificados,
 conflitos de rótulos e sobreposições de data, câmera e captura. Conflitos de rótulos em imagens
 idênticas são excluídos. Para duplicatas, preserva-se primeiro treino, depois validação, depois

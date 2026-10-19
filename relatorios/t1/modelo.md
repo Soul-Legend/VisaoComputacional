@@ -179,11 +179,17 @@ Tabela 1. Composição do subconjunto utilizado no estudo.
 
 ![Distribuição dos dados]({{figuras}}/distribuicoes.png)
 
-Figura 5. Quantidade de imagens por classe e clima em cada partição.
+Figura 5. Quantidade de imagens por classe e clima. A ausência de RAINY na validação
+é herdada da partição oficial do dataset.
 
-O teste mantém a proporção observada nas listas, sem balanceamento artificial. Como essa
-proporção varia entre as partições, a avaliação precisa considerar o desempenho das duas
-classes, além da acurácia total. Esse ponto motiva a escolha do F1 macro na seleção.
+A lista oficial val.txt contém 6.346 imagens SUNNY, 12.301 OVERCAST e nenhuma RAINY.
+A ausência de chuva não foi causada pela limpeza ou pela nossa amostragem: preservamos
+a composição dessa lista. O treino contém imagens de chuva, mas a validação não avalia
+essa condição durante a escolha do descritor e de C. Isso limita sua representatividade
+em relação ao teste, que inclui chuva, e contextualiza a mudança de ranking discutida na seção 6.
+
+O teste também preserva as proporções das listas, sem balanceamento artificial. Como as
+proporções das classes variam, usamos F1 macro na seleção, além de apresentar a acurácia total.
 
 O arquivo foi obtido da release oficial dos autores, que informa licença ODbL 1.0. URL,
 tamanho e hash do download estão registrados na auditoria. Os exemplos visuais deste
