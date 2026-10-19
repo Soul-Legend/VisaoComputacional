@@ -1,0 +1,140 @@
+{
+  "original": {
+    "teste": 31825,
+    "treino": 94493,
+    "validacao": 18647
+  },
+  "unreadable": 0,
+  "conflicting_labels": 38,
+  "duplicates_removed": 0,
+  "eligible": {
+    "teste": 31823,
+    "treino": 94457,
+    "validacao": 18647
+  },
+  "selected": {
+    "teste": 1500,
+    "treino": 7000,
+    "validacao": 1500
+  },
+  "overlap_original": {
+    "camera": {
+      "treino/validacao": 9,
+      "treino/teste": 9,
+      "validacao/teste": 9
+    },
+    "date": {
+      "treino/validacao": 0,
+      "treino/teste": 0,
+      "validacao/teste": 0
+    },
+    "capture": {
+      "treino/validacao": 0,
+      "treino/teste": 0,
+      "validacao/teste": 0
+    },
+    "slot": {
+      "treino/validacao": 164,
+      "treino/teste": 164,
+      "validacao/teste": 164
+    }
+  },
+  "overlap_selected": {
+    "camera": {
+      "treino/validacao": 9,
+      "treino/teste": 9,
+      "validacao/teste": 9
+    },
+    "date": {
+      "treino/validacao": 0,
+      "treino/teste": 0,
+      "validacao/teste": 0
+    },
+    "capture": {
+      "treino/validacao": 0,
+      "treino/teste": 0,
+      "validacao/teste": 0
+    },
+    "slot": {
+      "treino/validacao": 164,
+      "treino/teste": 164,
+      "validacao/teste": 164
+    }
+  },
+  "manifest_sha256": "f7ac99e8b862efdf66d50f9eb641ad29540eda7213c0ce911334bc10765e58ad",
+  "provenance": {
+    "utc": "2026-10-19T16:09:52.698976+00:00",
+    "commit": "937e33e7b0aa0266cfde68ba3c2c541b09c878ec",
+    "tracked_dirty": false,
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+    "versions": {
+      "numpy": "2.5.4",
+      "pandas": "2.3.3",
+      "opencv-python-headless": "4.14.0.94",
+      "scikit-image": "0.26.0",
+      "scikit-learn": "1.9.1",
+      "matplotlib": "3.11.2",
+      "PyYAML": "6.0.3"
+    },
+    "config": {
+      "seed": 42,
+      "data_root": "data/raw/CNR-EXT",
+      "manifest": "data/manifests/t1.csv",
+      "processed_dir": "data/processed",
+      "models_dir": "modelos",
+      "results_dir": "resultados/t1",
+      "report_dir": "relatorios/t1",
+      "split_files": {
+        "treino": "LABELS/train.txt",
+        "validacao": "LABELS/val.txt",
+        "teste": "LABELS/test.txt"
+      },
+      "sample_sizes": {
+        "treino": 7000,
+        "validacao": 1500,
+        "teste": 1500
+      },
+      "image_size": [
+        128,
+        128
+      ],
+      "descriptors": [
+        "hog",
+        "hsv",
+        "lbp",
+        "combinado"
+      ],
+      "c_values": [
+        0.01,
+        0.1,
+        1.0,
+        10.0
+      ],
+      "svm_max_iter": 20000,
+      "svm_tol": 0.0001,
+      "hist_bins": 16,
+      "lbp_points": 8,
+      "lbp_radius": 1,
+      "hog_orientations": 9,
+      "hog_pixels_per_cell": [
+        8,
+        8
+      ],
+      "hog_cells_per_block": [
+        2,
+        2
+      ],
+      "config_path": "configs/t1.yaml"
+    },
+    "manifest_sha256": "f7ac99e8b862efdf66d50f9eb641ad29540eda7213c0ce911334bc10765e58ad"
+  },
+  "acquisition": {
+    "url": "https://github.com/fabiocarrara/deep-parking/releases/download/archive/CNR-EXT-Patches-150x150.zip",
+    "sha256": "84169527af6ad6aaf51729663b59283bc5f28368ff9ddd7856198eec226056d6",
+    "bytes": 449502403,
+    "licenca": "ODbL-1.0",
+    "origem": "http://cnrpark.it/"
+  }
+}

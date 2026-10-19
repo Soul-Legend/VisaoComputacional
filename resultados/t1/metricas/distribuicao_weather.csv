@@ -1,0 +1,9 @@
+split,weather,n
+teste,OVERCAST,301
+teste,RAINY,606
+teste,SUNNY,593
+treino,OVERCAST,1895
+treino,RAINY,1829
+treino,SUNNY,3276
+validacao,OVERCAST,990
+validacao,SUNNY,510

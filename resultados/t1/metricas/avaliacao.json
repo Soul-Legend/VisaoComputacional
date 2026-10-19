@@ -1,0 +1,80 @@
+{
+  "selected": "lbp",
+  "provenance": {
+    "utc": "2026-10-19T16:18:11.804178+00:00",
+    "commit": "b2de1ddb7641fd6e82ee36d1a2007b319a060c83",
+    "tracked_dirty": false,
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+    "versions": {
+      "numpy": "2.5.4",
+      "pandas": "2.3.3",
+      "opencv-python-headless": "4.14.0.94",
+      "scikit-image": "0.26.0",
+      "scikit-learn": "1.9.1",
+      "matplotlib": "3.11.2",
+      "PyYAML": "6.0.3"
+    },
+    "config": {
+      "seed": 42,
+      "data_root": "data/raw/CNR-EXT",
+      "manifest": "data/manifests/t1.csv",
+      "processed_dir": "data/processed",
+      "models_dir": "modelos",
+      "results_dir": "resultados/t1",
+      "report_dir": "relatorios/t1",
+      "split_files": {
+        "treino": "LABELS/train.txt",
+        "validacao": "LABELS/val.txt",
+        "teste": "LABELS/test.txt"
+      },
+      "sample_sizes": {
+        "treino": 7000,
+        "validacao": 1500,
+        "teste": 1500
+      },
+      "image_size": [
+        128,
+        128
+      ],
+      "descriptors": [
+        "hog",
+        "hsv",
+        "lbp",
+        "combinado"
+      ],
+      "c_values": [
+        0.01,
+        0.1,
+        1.0,
+        10.0
+      ],
+      "svm_max_iter": 20000,
+      "svm_tol": 0.0001,
+      "hist_bins": 16,
+      "lbp_points": 8,
+      "lbp_radius": 1,
+      "hog_orientations": 9,
+      "hog_pixels_per_cell": [
+        8,
+        8
+      ],
+      "hog_cells_per_block": [
+        2,
+        2
+      ],
+      "config_path": "configs/t1.yaml"
+    },
+    "manifest_sha256": "f7ac99e8b862efdf66d50f9eb641ad29540eda7213c0ce911334bc10765e58ad"
+  },
+  "freeze_sha256": "54ab1a88cbea33a782e9a12aebc4f6f5d4a3afdd276f30c3ac356ba90baa796d",
+  "test_table_sha256": "21fa56c499b2a91dcd03617a4de17e09a6e79b0aeda92e7219453132259f195b",
+  "prediction_sha256": {
+    "combinado.csv": "0159b333dfb8e0b2bb03e8f59a93407502e790c8661b32c0c807560b79c7ddae",
+    "hog.csv": "c1df9fc2100b74b9ca523f5a259c619bc5f8813a8160dc85552e469cb90eec41",
+    "hsv.csv": "da78384d49e17954019a127af4fb5c0fcde0f8a015c74097923b498574cf493a",
+    "lbp.csv": "bdecb2fc046097f19b2c063fe4ee91fb8082cd45fb6513b86d9e6466d6e2f624",
+    "majoritario.csv": "609a479482f75ae9333fed97a6927255498a4f86ca023b21459572998178e95e"
+  }
+}

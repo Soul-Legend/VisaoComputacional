@@ -1,0 +1,143 @@
+{
+  "signature": "9420b5aa6f2e0631a4aea195c4fd2050785619c526123bacd8012ff53b0aa006",
+  "selected": "lbp",
+  "models": [
+    {
+      "descriptor": "hog",
+      "C": 0.01,
+      "dimension": 8100,
+      "validation_f1_macro": 0.8762016180448522,
+      "training_seconds": 8.54493199999979,
+      "n_iter": 618,
+      "model_file": "hog.joblib",
+      "model_sha256": "ae5fc4ba06d15cbb06fa0bb7c8f86487032e040f9f513baf7fdd083562428a30",
+      "cache_sha256": "2357cb2336f8c33ccfb4aa715eb93a754ae1374ec100051e4002ca4b5ee0bc30",
+      "extraction_seconds": {
+        "treino": 49.74934180000673,
+        "validacao": 11.049046399984036,
+        "teste": 11.185066099994401
+      }
+    },
+    {
+      "descriptor": "hsv",
+      "C": 0.1,
+      "dimension": 48,
+      "validation_f1_macro": 0.7462871800831805,
+      "training_seconds": 0.028147699999863107,
+      "n_iter": 6,
+      "model_file": "hsv.joblib",
+      "model_sha256": "07b2e770fa881d596e892b06bffda5ef3dc43db616248384e6062f9b155523c5",
+      "cache_sha256": "283697b8385db82158d57ff6d4b9f7d645bdbff251b24d50870df4c71bb9df3c",
+      "extraction_seconds": {
+        "treino": 8.085565299978043,
+        "validacao": 1.7081363000052079,
+        "teste": 1.7210814999925788
+      }
+    },
+    {
+      "descriptor": "lbp",
+      "C": 0.01,
+      "dimension": 10,
+      "validation_f1_macro": 0.9028024755094106,
+      "training_seconds": 0.005325000000084401,
+      "n_iter": 5,
+      "model_file": "lbp.joblib",
+      "model_sha256": "ac141c5a9faf022b42166ae8ab33e234c358faf8074c69ffcc4594ac732432b0",
+      "cache_sha256": "fdeaa5d2b7ab22b0e20492b2f3a079ca5fd3110c2e209e6619ceec01a2422bec",
+      "extraction_seconds": {
+        "treino": 14.13790119998339,
+        "validacao": 3.023877200006609,
+        "teste": 3.028359800004182
+      }
+    },
+    {
+      "descriptor": "combinado",
+      "C": 0.01,
+      "dimension": 8158,
+      "validation_f1_macro": 0.9026828150408418,
+      "training_seconds": 5.95156870000028,
+      "n_iter": 434,
+      "model_file": "combinado.joblib",
+      "model_sha256": "f72c4c4009d48896f37011941cc265f9cfb01f5ab5c9ee29076d2aecefc04c7c",
+      "cache_sha256": "afdc46ba8910f26e3476514aecf69232e83788d5731d273e5816a0724f27727f",
+      "extraction_seconds": {
+        "treino": 37.60444129998905,
+        "validacao": 9.013888199973735,
+        "teste": 9.654663299969798
+      }
+    }
+  ],
+  "dummy": {
+    "model_file": "majoritario.joblib",
+    "model_sha256": "779eba2a5bd94e113fcdb32b4a10027291991fbef538e43f62c1ae5aeab808aa",
+    "training_seconds": 0.0002480000002833549
+  },
+  "provenance": {
+    "utc": "2026-10-19T16:17:14.230655+00:00",
+    "commit": "2a2d3937a8736fc96cea3809c042fb93a1a297a7",
+    "tracked_dirty": false,
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+    "versions": {
+      "numpy": "2.5.4",
+      "pandas": "2.3.3",
+      "opencv-python-headless": "4.14.0.94",
+      "scikit-image": "0.26.0",
+      "scikit-learn": "1.9.1",
+      "matplotlib": "3.11.2",
+      "PyYAML": "6.0.3"
+    },
+    "config": {
+      "seed": 42,
+      "data_root": "data/raw/CNR-EXT",
+      "manifest": "data/manifests/t1.csv",
+      "processed_dir": "data/processed",
+      "models_dir": "modelos",
+      "results_dir": "resultados/t1",
+      "report_dir": "relatorios/t1",
+      "split_files": {
+        "treino": "LABELS/train.txt",
+        "validacao": "LABELS/val.txt",
+        "teste": "LABELS/test.txt"
+      },
+      "sample_sizes": {
+        "treino": 7000,
+        "validacao": 1500,
+        "teste": 1500
+      },
+      "image_size": [
+        128,
+        128
+      ],
+      "descriptors": [
+        "hog",
+        "hsv",
+        "lbp",
+        "combinado"
+      ],
+      "c_values": [
+        0.01,
+        0.1,
+        1.0,
+        10.0
+      ],
+      "svm_max_iter": 20000,
+      "svm_tol": 0.0001,
+      "hist_bins": 16,
+      "lbp_points": 8,
+      "lbp_radius": 1,
+      "hog_orientations": 9,
+      "hog_pixels_per_cell": [
+        8,
+        8
+      ],
+      "hog_cells_per_block": [
+        2,
+        2
+      ],
+      "config_path": "configs/t1.yaml"
+    },
+    "manifest_sha256": "f7ac99e8b862efdf66d50f9eb641ad29540eda7213c0ce911334bc10765e58ad"
+  }
+}
