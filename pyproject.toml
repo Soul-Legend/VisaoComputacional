@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "visao-computacional-t1"
+version = "0.1.0"
+description = "Classificacao reprodutivel de ocupacao de vagas com descritores classicos"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.26,<3", "pandas>=2.2,<3", "opencv-python-headless>=4.10,<5",
+  "scikit-image>=0.24,<1", "scikit-learn>=1.5,<2", "matplotlib>=3.9,<4",
+  "PyYAML>=6,<7", "joblib>=1.4,<2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
+report = ["reportlab>=4,<5", "markdown-it-py>=3,<5", "pypdf>=5,<7", "pypdfium2>=4,<6"]
+
+[project.scripts]
+visao-t1 = "visao_computacional.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 110
+
