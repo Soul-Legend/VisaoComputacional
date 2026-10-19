@@ -16,6 +16,13 @@ from .preprocessamento import ler_rgb
 
 CORES = ["#2563eb", "#ea580c"]
 NOMES = {0: "Livre", 1: "Ocupada"}
+DESCRITORES = {
+    "hog": "HOG",
+    "hsv": "HSV",
+    "lbp": "LBP",
+    "combinado": "HSV + LBP + HOG",
+    "majoritario": "Majoritário",
+}
 
 
 def estilo():
@@ -107,7 +114,10 @@ def figuras(config):
     x = np.arange(len(metrics))
     ax.bar(x - 0.18, metrics.accuracy, 0.36, label="Acurácia", color=CORES[0])
     ax.bar(x + 0.18, metrics.f1_macro, 0.36, label="F1 macro", color=CORES[1])
-    ax.set(xticks=x, xticklabels=names, ylim=(0, 1.1), ylabel="Escore", title="Comparação no teste congelado")
+    labels = ["HSV + LBP\n+ HOG" if n == "combinado" else DESCRITORES[n] for n in names]
+    ax.set(
+        xticks=x, xticklabels=labels, ylim=(0, 1.1), ylabel="Escore", title="Comparação no teste congelado"
+    )
     ax.legend(loc="lower right")
     for i, value in enumerate(metrics.f1_macro):
         ax.text(i + 0.18, value + 0.015, f"{value:.3f}", ha="center", fontsize=8)
@@ -115,7 +125,7 @@ def figuras(config):
     salvar_figura(fig, base / "figuras/comparacao.png")
     pivot = climate.pivot(index="weather", columns="descriptor", values="f1_macro").reindex(columns=names)
     fig, ax = plt.subplots(figsize=(9, 3.6))
-    pivot.plot.bar(ax=ax, rot=0, ylim=(0, 1.15))
+    pivot.rename(columns=DESCRITORES).plot.bar(ax=ax, rot=0, ylim=(0, 1.15))
     ax.set(xlabel="Clima", ylabel="F1 macro", title="Desagregação por clima (sem ajuste de modelos)")
     ax.legend(fontsize=8, ncol=3, loc="lower right")
     fig.tight_layout()

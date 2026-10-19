@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from .dados import carregar_manifesto
-from .visualizacao import resultados_verificados
+from .visualizacao import DESCRITORES, resultados_verificados
 
 
 def tabela(headers, rows):
@@ -26,13 +26,7 @@ def escrever_markdown(config):
     validation = pd.read_csv(base / "metricas/validacao.csv")
     climate = pd.read_csv(base / "metricas/clima.csv")
     winner = freeze["selected"]
-    names = {
-        "hog": "HOG",
-        "hsv": "HSV",
-        "lbp": "LBP",
-        "combinado": "Combinação",
-        "majoritario": "Majoritário",
-    }
+    names = DESCRITORES
     best, dummy = test.loc[winner], test.loc["majoritario"]
     selected = next(r for r in freeze["models"] if r["descriptor"] == winner)
     prediction = pd.read_csv(base / "predicoes" / f"{winner}.csv")
@@ -44,6 +38,7 @@ def escrever_markdown(config):
         "vencedor": names[winner],
         "c": f"{selected['C']:g}",
         "val_f1": f"{selected['validation_f1_macro']:.4f}",
+        "val_f1_combinado": f"{next(r for r in freeze['models'] if r['descriptor'] == 'combinado')['validation_f1_macro']:.4f}",
         "teste_f1": f"{best.f1_macro:.4f}",
         "teste_acc": f"{best.accuracy:.4f}",
         "dummy_f1": f"{dummy.f1_macro:.4f}",
@@ -122,13 +117,11 @@ def escrever_markdown(config):
     )
     pivot = climate.pivot(index="weather", columns="descriptor", values="f1_macro")
     replacements["tabela_clima"] = tabela(
-        ["Clima", "N", "Livre", "Ocup.", *["Combin." if n == "combinado" else names[n] for n in test.index]],
+        ["Clima", "N (livre/ocup.)", *[names[n] for n in test.index]],
         [
             [
                 w,
-                int(g.n.iloc[0]),
-                int(g.n_livre.iloc[0]),
-                int(g.n_ocupada.iloc[0]),
+                f"{int(g.n.iloc[0])} ({int(g.n_livre.iloc[0])}/{int(g.n_ocupada.iloc[0])})",
                 *[f"{pivot.loc[w, n]:.3f}" for n in test.index],
             ]
             for w, g in climate.groupby("weather")
@@ -137,6 +130,23 @@ def escrever_markdown(config):
     replacements["tabela_versoes"] = tabela(
         ["Componente", "Versão"], evaluation["provenance"]["versions"].items()
     )
+
+    def percent(value):
+        return f"{100 * value:.1f}%".replace(".", ",")
+
+    for split in ("validacao", "teste"):
+        subset = frame[frame.split == split]
+        replacements[f"ocupadas_{split}"] = percent(subset.label.mean())
+        for weather in ("OVERCAST", "SUNNY", "RAINY"):
+            replacements[f"{weather.lower()}_{split}"] = percent(subset.weather.eq(weather).mean())
+    for weather in ("OVERCAST", "SUNNY", "RAINY"):
+        for descriptor in ("lbp", "combinado"):
+            row = climate[(climate.weather == weather) & (climate.descriptor == descriptor)].iloc[0]
+            replacements[f"f1_{descriptor}_{weather.lower()}"] = f"{row.f1_macro:.4f}"
+    for descriptor in ("hog", "combinado"):
+        replacements[f"tempo_{descriptor}"] = (
+            f"{test.loc[descriptor, 'extraction_ms_per_image']:.3f}".replace(".", ",")
+        )
     worst = climate[climate.descriptor == winner].sort_values("f1_macro").iloc[0]
     replacements["pior_clima"] = f"{worst.weather} (F1 macro {worst.f1_macro:.4f}, n={int(worst.n)})"
     for field in ("camera", "date", "capture", "slot"):
@@ -244,8 +254,12 @@ def renderizar_pdf(source, output):
                     rows.append(cells)
                 i += 1
             column_widths = [width / len(rows[0])] * len(rows[0])
-            if len(rows[0]) == 9:
-                column_widths = [66] + [(width - 66) / 8] * 8
+            first_header = rows[0][0].getPlainText()
+            if first_header == "Descritor":
+                column_widths = [110] + [(width - 110) / (len(rows[0]) - 1)] * (len(rows[0]) - 1)
+            elif first_header == "Clima" and len(rows[0]) == 7:
+                weights = [1.1, 1.45, 0.7, 0.7, 0.7, 1.8, 1.1]
+                column_widths = [width * weight / sum(weights) for weight in weights]
             table = Table(rows, colWidths=column_widths, repeatRows=1, hAlign="LEFT")
             table.setStyle(
                 TableStyle(
