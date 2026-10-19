@@ -167,7 +167,7 @@ def renderizar_pdf(source, output):
     from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
     source = Path(source)
-    md = MarkdownIt("default").enable("table")
+    md = MarkdownIt("default", {"html": True}).enable("table")
     tokens = md.parse(source.read_text(encoding="utf-8"))
     styles = getSampleStyleSheet()
     styles.add(
