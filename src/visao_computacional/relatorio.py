@@ -151,6 +151,9 @@ def escrever_markdown(config):
     template = Path(config["project_root"]) / "relatorios/t1/modelo.md"
     content = template.read_text(encoding="utf-8")
     replacements["figuras"] = Path(os.path.relpath(base / "figuras", report_dir)).as_posix()
+    replacements["ilustracoes"] = Path(
+        os.path.relpath(Path(config["project_root"]) / "docs/imagens", report_dir)
+    ).as_posix()
     for key, value in replacements.items():
         content = content.replace("{{" + key + "}}", value)
     if "{{" in content:

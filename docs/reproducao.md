@@ -98,6 +98,11 @@ O manifesto deve ser o mesmo para a comparação com a CNN no T2.
 
 ## PDF
 
+Para recriar as figuras didáticas dos métodos com imagens de treino, execute
+`.venv\Scripts\python -m visao_computacional.cli ilustracoes` antes de gerar o relatório.
+Veja [a explicação das figuras](metodos.md). Essas imagens ficam em `docs/imagens/`,
+separadas das figuras de resultados, e sua geração não reabre o teste.
+
 A CLI renderiza o Markdown gerado com ReportLab. Não requer LaTeX, Word ou serviço externo.
 Após qualquer alteração, renderize as páginas com Poppler (`pdftoppm`) ou outro leitor e confira
 legibilidade, tabelas, figuras, paginação e correspondência com o Markdown. O alvo de extensão
