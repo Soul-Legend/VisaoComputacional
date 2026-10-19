@@ -31,6 +31,9 @@ def escrever_markdown(config):
     prediction = pd.read_csv(base / "predicoes" / f"{winner}.csv")
     counts = frame.groupby(["split", "label"]).size().unstack(fill_value=0)
     replacements = {
+        "n_total": f"{len(frame):,}".replace(",", "."),
+        "n_treino": f"{int(counts.loc['treino'].sum()):,}".replace(",", "."),
+        "n_teste": f"{int(counts.loc['teste'].sum()):,}".replace(",", "."),
         "vencedor": winner,
         "c": f"{selected['C']:g}",
         "val_f1": f"{selected['validation_f1_macro']:.4f}",
@@ -226,7 +229,10 @@ def renderizar_pdf(source, output):
                 elif tokens[i].type == "tr_close":
                     rows.append(cells)
                 i += 1
-            table = Table(rows, colWidths=[width / len(rows[0])] * len(rows[0]), repeatRows=1, hAlign="LEFT")
+            column_widths = [width / len(rows[0])] * len(rows[0])
+            if len(rows[0]) == 9:
+                column_widths = [66] + [(width - 66) / 8] * 8
+            table = Table(rows, colWidths=column_widths, repeatRows=1, hAlign="LEFT")
             table.setStyle(
                 TableStyle(
                     [

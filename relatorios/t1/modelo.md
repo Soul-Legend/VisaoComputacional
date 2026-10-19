@@ -12,7 +12,7 @@ O objetivo é comparar descritores de cor, textura e gradientes, mantendo o clas
 e as partições de dados fixos. A pergunta experimental é: qual representação oferece o melhor
 F1 macro de validação e como esse modelo se comporta em dias de teste distintos?
 
-Foram utilizadas 10.000 imagens reais do CNR-EXT, selecionadas das listas oficiais dos autores
+Foram utilizadas {{n_total}} imagens reais do CNR-EXT, selecionadas das listas oficiais dos autores
 [1]. HSV, LBP, HOG e sua concatenação foram avaliados com SVM linear. O modelo selecionado
 foi **{{vencedor}}**, com C={{c}}, F1 macro de validação **{{val_f1}}** e F1 macro de teste
 **{{teste_f1}}**. A acurácia de teste foi **{{teste_acc}}**. A referência majoritária alcançou
@@ -147,7 +147,7 @@ O manifesto contém identificador, caminho relativo, classe, câmera, data, hor�
 e partição. Seu hash conecta os dados aos caches e modelos. Os arquivos locais são conferidos
 com o hash auditado durante a extração, para detectar mudanças posteriores à limpeza.
 
-Cada configuração foi ajustada somente nas 7.000 imagens de treino. StandardScaler aprende
+Cada configuração foi ajustada somente nas {{n_treino}} imagens de treino. StandardScaler aprende
 média e desvio no treino e apenas transforma validação e teste. O SVM usa semente 42,
 dual automático, tolerância 1e-4 e limite de 20.000 iterações. Não convergência interrompe
 o treinamento, impedindo que um ajuste incompleto seja aceito silenciosamente.
@@ -198,7 +198,7 @@ informação ou redundância; não se assumiu previamente que ela deveria vencer
 
 {{tabela_teste}}
 
-Tabela 3. Mesmas 1.500 imagens para todos os modelos. O majoritário não tem descritor nem C.
+Tabela 3. Mesmas {{n_teste}} imagens para todos os modelos. O majoritário não tem descritor nem C.
 
 O vencedor de validação atingiu F1 macro **{{teste_f1}}** e acurácia **{{teste_acc}}**.
 A diferença de F1 macro em relação ao majoritário foi **{{ganho_f1}}**. {{nota_ranking}}
@@ -297,7 +297,10 @@ commit da avaliação: {{commit_teste}}. O arquivo requirements-lock.txt registr
 
 {{tabela_versoes}}
 
-O manifesto possui SHA-256 {{manifest_hash}}.
+Identidade do manifesto (SHA-256):
+
+`{{manifest_hash}}`
+
 As listas preservam caminhos relativos, e os artefatos de proveniência registram configurações,
 versões e hashes. Dados e modelos não são versionados; podem ser obtidos e treinados novamente.
 
@@ -329,7 +332,7 @@ As versões efetivamente utilizadas constam da seção de reprodução e dos arq
 
 ### Localização das evidências
 
-- data/manifests/t1.csv: identidade, rótulos e partições das 10.000 imagens.
+- data/manifests/t1.csv: identidade, rótulos e partições das {{n_total}} imagens do estudo original.
 - resultados/t1/metricas/auditoria.json: aquisição, limpeza e sobreposições.
 - resultados/t1/metricas/validacao.csv: todos os ajustes e critérios de seleção.
 - resultados/t1/metricas/congelamento.json: vencedor, modelos e hashes.
