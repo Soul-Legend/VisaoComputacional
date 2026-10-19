@@ -6,7 +6,7 @@ from time import perf_counter
 
 import numpy as np
 import cv2
-from skimage.feature import hog
+from skimage.feature import hog, local_binary_pattern
 
 from .configuracao import salvar_json, sha256_file
 from .dados import carregar_manifesto, caminho_seguro
@@ -32,6 +32,11 @@ def vetor(rgb, name, config):
             hist = np.histogram(hsv[:, :, channel], bins=config["hist_bins"], range=(0, upper))[0]
             histograms.append(hist / hist.sum())
         result = np.concatenate(histograms)
+    elif name == "lbp":
+        points = config["lbp_points"]
+        codes = local_binary_pattern(cinza(rgb), points, config["lbp_radius"], method="uniform")
+        hist = np.histogram(codes, bins=points + 2, range=(0, points + 2))[0]
+        result = hist / hist.sum()
     elif name == "hog":
         result = hog(cinza(rgb), orientations=config["hog_orientations"],
                      pixels_per_cell=tuple(config["hog_pixels_per_cell"]),

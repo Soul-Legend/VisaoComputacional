@@ -33,6 +33,14 @@ def test_hsv_rgb_e_normalizacao():
     assert vector[0] == 1  # Vermelho RGB corresponde a H=0 no OpenCV.
 
 
+def test_lbp_constante_finito_normalizado():
+    config = carregar_config("configs/t1.yaml")
+    vector = vetor(np.zeros((128, 128, 3), dtype=np.uint8), "lbp", config)
+    assert vector.shape == (10,)
+    assert np.isfinite(vector).all()
+    np.testing.assert_allclose(vector.sum(), 1)
+
+
 def test_desempate_dimensao_e_c():
     candidates = [{"validation_f1_macro": .90001, "dimension": 100, "C": 1},
                   {"validation_f1_macro": .90002, "dimension": 10, "C": 10},
