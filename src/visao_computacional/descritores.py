@@ -5,6 +5,7 @@ from pathlib import Path
 from time import perf_counter
 
 import numpy as np
+import cv2
 from skimage.feature import hog
 
 from .configuracao import salvar_json, sha256_file
@@ -24,7 +25,14 @@ def assinatura(config):
 
 
 def vetor(rgb, name, config):
-    if name == "hog":
+    if name == "hsv":
+        hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
+        histograms = []
+        for channel, upper in enumerate((180, 256, 256)):
+            hist = np.histogram(hsv[:, :, channel], bins=config["hist_bins"], range=(0, upper))[0]
+            histograms.append(hist / hist.sum())
+        result = np.concatenate(histograms)
+    elif name == "hog":
         result = hog(cinza(rgb), orientations=config["hog_orientations"],
                      pixels_per_cell=tuple(config["hog_pixels_per_cell"]),
                      cells_per_block=tuple(config["hog_cells_per_block"]), block_norm="L2-Hys")
