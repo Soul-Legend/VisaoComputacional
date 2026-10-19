@@ -4,226 +4,311 @@ T1 | INE5443 - Reconhecimento de Padrões | 2026-2
 
 Repositório: Soul-Legend/VisaoComputacional
 
-## 1. Resumo e objetivo
+## 1. Introdução e objetivo
 
-Este trabalho investiga a classificação binária de imagens individuais de vagas de estacionamento.
-A entrada contém uma vaga previamente localizada; a saída indica livre (0) ou ocupada (1).
-O objetivo é comparar descritores de cor, textura e gradientes, mantendo o classificador linear
-e as partições de dados fixos. A pergunta experimental é: qual representação oferece o melhor
-F1 macro de validação e como esse modelo se comporta em dias de teste distintos?
+Uma vaga de estacionamento pode mudar bastante de aparência ao longo do dia. A passagem de
+um carro altera as cores, as texturas e os contornos da imagem, enquanto sombras, reflexos e
+chuva também modificam essas mesmas pistas. O desafio deste trabalho é reconhecer a ocupação
+da vaga apesar dessas variações.
 
-Foram utilizadas {{n_total}} imagens reais do CNR-EXT, selecionadas das listas oficiais dos autores
-[1]. HSV, LBP, HOG e sua concatenação foram avaliados com SVM linear. O modelo selecionado
-foi **{{vencedor}}**, com C={{c}}, F1 macro de validação **{{val_f1}}** e F1 macro de teste
-**{{teste_f1}}**. A acurácia de teste foi **{{teste_acc}}**. A referência majoritária alcançou
-F1 macro **{{dummy_f1}}**. Todos os valores são medições desta execução.
+Para estudar o problema, partimos de uma tarefa bem delimitada: receber uma imagem já
+recortada de uma vaga e classificá-la como **livre (0)** ou **ocupada (1)**. A localização das
+vagas na imagem completa é considerada conhecida. Assim, podemos concentrar a análise na
+forma de representar visualmente cada recorte e na qualidade da classificação obtida.
 
-O problema é relevante porque a aparência de uma vaga varia com iluminação, clima, cor do
-veículo, sombras e oclusões. O recorte adotado permite estudar essas variações sem depender
-da localização automática de vagas. A tarefa de classificar uma região conhecida é diferente
-de detectar veículos ou vagas em uma imagem completa; as conclusões ficam restritas à primeira.
+Comparamos três representações: HSV, que descreve cores; LBP, que resume texturas; e HOG,
+que representa orientações de gradientes. Também avaliamos a combinação dos três descritores.
+Em todos os casos, usamos o mesmo classificador, uma SVM linear. Isso permite investigar a
+seguinte pergunta: **qual representação é escolhida na validação e como ela se comporta em
+imagens de outros dias?**
 
-### Contribuições
+### Visão geral do experimento
 
-- Pipeline configurável com auditoria dos dados e identificação dos artefatos por hashes.
-- Comparação de quatro representações e uma referência de classe majoritária.
-- Seleção somente por validação, seguida de avaliação congelada e resultados por classe e clima.
-- Análise ilustrativa dos erros e registro de custos computacionais.
+Foram utilizadas {{n_total}} imagens reais do CNR-EXT [1], distribuídas entre treino, validação
+e teste. O treino serve para aprender o classificador; a validação, para escolher a configuração;
+e o teste, para avaliar a escolha em dados reservados. Os descritores foram comparados nas
+mesmas imagens, seguindo um protocolo definido antes da consulta ao teste.
 
-Não há rede neural, vídeo, rastreamento, detector de vagas ou interface neste T1. O manifesto
-e o teste serão preservados para a comparação posterior com uma abordagem neural no T2.
-Uma boa pontuação neste estudo não comprova funcionamento em um estacionamento novo.
+O modelo selecionado foi **{{vencedor}} + SVM**, com C={{c}}. Seu F1 macro foi **{{val_f1}}**
+na validação e **{{teste_f1}}** no teste, com acurácia de **{{teste_acc}}**. Como referência,
+um classificador que sempre prevê a classe mais frequente do treino obteve F1 macro de
+**{{dummy_f1}}**. As seções seguintes explicam como esses números foram obtidos e o que
+eles permitem concluir.
 
-O desenvolvimento utiliza Python 3, OpenCV, scikit-image e scikit-learn. O código reutilizável
-fica separado de documentação, resultados e relatório. As tabelas e figuras são geradas dos
-artefatos registrados; dados brutos e modelos treinados não são incluídos no histórico Git.
+Primeiro, apresentamos os métodos com exemplos visuais. Em seguida, descrevemos os dados e
+o protocolo experimental, para então analisar os resultados por classe, clima e tipo de erro.
+Os detalhes necessários para reproduzir o estudo ficam reunidos ao final e na documentação
+do repositório.
 
-<!-- PAGEBREAK -->
-
-## 2. Fundamentação e justificativa
-
-### Cor: histogramas HSV
-
-HSV separa matiz, saturação e valor. Histogramas descrevem frequências de cores e reduzem a
-dependência da posição exata dos pixels. Três histogramas com 16 bins são normalizados
-individualmente e concatenados em 48 componentes. H usa o intervalo [0,180) do OpenCV;
-S e V usam [0,256). A conversão de BGR para RGB é explícita na leitura das imagens.
-
-A hipótese é que distribuições de cor de veículos e pavimento contenham informação útil.
-Entretanto, histogramas globais descartam a organização espacial: recortes com objetos diferentes
-podem produzir distribuições semelhantes. Sombras e iluminação também alteram os valores.
-
-### Textura: Local Binary Patterns
-
-LBP compara a intensidade de um pixel com a de seus vizinhos, codificando padrões locais
-[3]. O operador uniforme com oito vizinhos e raio um produz um histograma de dez bins,
-normalizado para soma um. A entrada é cinza inteiro, evitando comparações instáveis entre
-valores de ponto flutuante. O histograma resume textura sem preservar sua localização.
-
-A motivação é que asfalto, carrocerias, vidros e bordas gerem padrões diferentes. Um vetor
-compacto permite verificar se essa informação basta para o problema. Adotar um único raio
-é uma simplificação: não foi realizado estudo multiescala ou busca dos parâmetros do LBP.
-
-### Forma: Histograms of Oriented Gradients
-
-HOG agrega orientações de gradientes em células e normaliza blocos de células [2]. Foram usadas
-nove orientações, células 8 × 8, blocos 2 × 2 e normalização L2-Hys. Em imagens de 128 × 128,
-o vetor tem 8.100 componentes. A organização espacial aproximada dos contornos pode representar
-estruturas introduzidas pelos veículos, embora também possa capturar o fundo e a perspectiva.
-
-### SVM linear e combinação
-
-SVM aprende uma fronteira de decisão no espaço das características [4]. C controla a penalização
-de erros no treino. LinearSVC usa regularização L2 e perda quadrática hinge nesta implementação.
-StandardScaler padroniza cada componente com estatísticas aprendidas somente no treino.
-
-A concatenação HSV + LBP + HOG tem 8.158 componentes e testa a complementaridade das três
-representações. A padronização é por componente, sem pesos explícitos para cada bloco.
-Como HOG possui muito mais componentes, a comparação não esgota outras ponderações possíveis.
-Não foram testados outros classificadores, kernels ou combinações parciais.
+O trabalho cobre a abordagem clássica do T1. A comparação com redes neurais ficará para o
+T2, usando o mesmo teste. Os resultados atuais se referem a dias distintos de um único
+estacionamento; sua aplicação a novos locais exigirá outra avaliação.
 
 <!-- PAGEBREAK -->
 
-## 3. Dataset, aquisição e auditoria
+## 2. Como os métodos representam a imagem
 
-O CNRPark+EXT foi disponibilizado por Amato e colaboradores para classificação de ocupação
-[1]. Utiliza-se apenas a extensão CNR-EXT: 144.965 recortes de nove câmeras, coletados em
-23 dias, com condições SUNNY, OVERCAST e RAINY. O CNRPark original não foi incorporado.
-As listas oficiais associam 0 a livre e 1 a ocupada e definem treino, validação e teste.
+Antes de classificar uma vaga, precisamos transformar seus pixels em uma descrição numérica.
+Cada descritor destaca um aspecto da cena. Para tornar essa diferença concreta, as Figuras
+1 a 3 usam o mesmo par de imagens de treino: a vaga 204 da câmera 6, livre às 07h46 e
+ocupada às 08h46 de 12/11/2015. Como os horários diferem, os exemplos também apresentam
+mudanças de iluminação. Sua finalidade é explicar os métodos.
 
-O arquivo foi adquirido da release dos autores. URL, tamanho e SHA-256 do download constam
-na auditoria. A fonte indica licença ODbL 1.0. Os exemplos deste relatório são derivados
-do CNRPark+EXT e mantêm a atribuição; o repositório não redistribui o arquivo bruto.
+### 2.1. HSV: descrever a distribuição das cores
 
-A auditoria encontrou **{{ilegíveis}} imagens ilegíveis**. Foram excluídos **{{conflitos}}
-registros com pixels idênticos e rótulos conflitantes**, antes de amostrar ou treinar.
-Foram removidas **{{duplicatas}} duplicatas adicionais**. A verificação usa hashes dos bytes
-e dos pixels decodificados, incluindo dimensões. Havendo cópias sem conflito, a regra prevista
-prioriza treino, validação e teste. A limpeza precede qualquer seleção de modelo.
+O espaço HSV separa três propriedades: **H (matiz)** identifica a tonalidade; **S (saturação)**
+indica o quanto a cor se afasta do cinza; e **V (valor)** representa sua intensidade. Na
+Figura 1, os canais S e V aparecem em cinza: quanto mais claro o pixel, maior o valor do canal.
+
+![Canais e histogramas HSV]({{ilustracoes}}/metodo_hsv.png)
+
+Figura 1. Canais HSV e seus histogramas para uma vaga livre e ocupada. Origem: CNRPark+EXT.
+O mapa de H usa cores para visualizar a matiz; ele não reconstrói a imagem original.
+
+No exemplo, a vaga livre concentra pixels com baixa saturação. A presença do carro distribui
+esses valores por mais intervalos e também modifica a intensidade. Em regiões quase cinzentas,
+a matiz pode oscilar mesmo quando a diferença de cor é pouco perceptível; por isso, H deve
+ser interpretado junto de S.
+
+Para gerar o descritor, dividimos os valores de cada canal em 16 intervalos, chamados bins,
+e contamos a fração de pixels em cada um. Cada histograma soma um. Ao reunir os três,
+obtemos **48 características**. H usa o intervalo [0,180) do OpenCV, e S e V usam [0,256).
+
+Essa representação é compacta, mas perde a posição das cores: imagens diferentes podem
+ter histogramas parecidos. A próxima representação procura informação na textura local.
+
+<!-- PAGEBREAK -->
+
+### 2.2. LBP: resumir as texturas locais
+
+Uma textura descreve como as intensidades variam em pequenas regiões. Mesmo sem considerar
+a cor, asfalto, vidros, carroceria e detalhes do veículo podem produzir padrões locais
+diferentes. O **Local Binary Patterns (LBP)** explora essa informação comparando cada pixel
+com seus vizinhos [3].
+
+Primeiro, convertemos a imagem para cinza. Para cada pixel, comparamos sua intensidade com
+oito vizinhos distribuídos em um círculo de raio um. O padrão dessas comparações recebe
+um código. Na versão uniforme adotada aqui, os códigos 0 a 8 representam padrões uniformes,
+com até duas transições entre comparações positivas e negativas ao percorrer o círculo;
+o código 9 reúne os demais padrões.
+
+![Texturas e histogramas LBP]({{ilustracoes}}/metodo_lbp.png)
+
+Figura 2. Da imagem em cinza ao mapa de códigos LBP e ao histograma de textura.
+As cores indicam códigos locais; não identificam automaticamente carro ou pavimento.
+
+O mapa conserva a posição de cada código e ajuda a enxergar onde os padrões mudam. No
+exemplo ocupado, é possível acompanhar estruturas do veículo. Já o vetor entregue ao
+classificador contém somente a frequência dos códigos: contamos quantas vezes cada um
+aparece e normalizamos o histograma para soma um. O resultado tem **dez características**.
+
+Os gráficos mostram que a distribuição desses padrões difere entre os dois recortes.
+Isso ilustra a informação disponível ao modelo, mas dois exemplos não bastam para afirmar
+que uma textura identifica a classe em todas as condições. Sombras, vegetação e marcações
+também podem modificar as frequências.
+
+LBP oferece uma descrição pequena e rápida de extrair. Em contrapartida, seu histograma
+global perde a localização das texturas e, nesta configuração, examina apenas uma escala.
+Para preservar mais informação sobre a organização dos contornos, avaliamos também o HOG.
+
+<!-- PAGEBREAK -->
+
+### 2.3. HOG: representar contornos e suas orientações
+
+O gradiente mede a mudança de intensidade entre pixels próximos. Mudanças fortes aparecem
+em bordas, como nos limites da carroceria e dos vidros. O **Histograms of Oriented Gradients
+(HOG)** resume a direção dessas mudanças em pequenas regiões da imagem [2].
+
+![Gradientes e representação HOG]({{ilustracoes}}/metodo_hog.png)
+
+Figura 3. Recortes originais, intensidade dos gradientes e orientações por célula.
+O contraste foi realçado com a mesma escala nos dois exemplos, somente para visualização.
+
+Na vaga ocupada, os contornos do carro introduzem várias orientações. A vaga livre também
+contém gradientes, vindos de marcações e outros elementos da cena. O HOG organiza essas
+respostas em células 8 × 8, com nove orientações, e normaliza blocos de 2 × 2 células pelo
+método L2-Hys. Em imagens de 128 × 128, o vetor final possui **8.100 características**.
+O desenho da figura resume orientações por célula; o vetor usado no treinamento inclui a
+normalização dos blocos e não deve ser confundido com esse desenho.
+
+### 2.4. Das características à classificação
+
+![Fluxo de classificação]({{ilustracoes}}/fluxo_classificacao.png)
+
+Figura 4. O mesmo fluxo é usado para cada descritor e para sua combinação.
+
+A SVM aprende uma fronteira que separa exemplos livres e ocupados no espaço das
+características [4]. Antes do ajuste, o StandardScaler padroniza cada componente com a
+média e o desvio do treino. O parâmetro C controla a penalização de erros durante o ajuste.
+Usamos LinearSVC, com regularização L2 e perda quadrática hinge.
+
+Na combinação, reunimos HSV, LBP e HOG em um vetor de **8.158 componentes**. A hipótese
+é que cor, textura e contornos forneçam informações complementares. A padronização ocorre
+por componente, sem pesos específicos para os três blocos. Seu benefício será verificado
+pelos experimentos, junto do aumento de dimensão e custo.
+
+<!-- PAGEBREAK -->
+
+## 3. Dataset e preparação dos dados
+
+O CNRPark+EXT foi disponibilizado por Amato e colaboradores para estudar a ocupação de
+vagas [1]. Utilizamos apenas sua extensão **CNR-EXT**, composta por 144.965 recortes de nove
+câmeras, capturados em 23 dias. As imagens estão organizadas por clima: SUNNY (ensolarado),
+OVERCAST (nublado) e RAINY (chuvoso). As listas dos autores fornecem os rótulos e as
+partições de treino, validação e teste.
+
+Antes da amostragem, conferimos todas as imagens dessas listas. Encontramos **{{ilegíveis}}
+imagens ilegíveis** e excluímos **{{conflitos}} registros com pixels idênticos e rótulos
+conflitantes**. Foram removidas **{{duplicatas}} duplicatas adicionais**. A identidade dos
+arquivos foi verificada pelo conteúdo e pelos pixels decodificados, incluindo suas dimensões.
+Essa limpeza ocorreu antes do treinamento.
+
+Em seguida, selecionamos {{n_total}} imagens, preservando aproximadamente as proporções
+de classe, câmera e clima dentro de cada partição oficial. A amostragem usa semente 42 e
+cotas proporcionais, com distribuição dos maiores restos para fechar os tamanhos exatos.
+Nenhuma imagem foi transferida entre as partições.
 
 {{tabela_dados}}
 
-Tabela 1. Composição do subconjunto congelado.
+Tabela 1. Composição do subconjunto utilizado no estudo.
 
-![Distribuições]({{figuras}}/distribuicoes.png)
+![Distribuição dos dados]({{figuras}}/distribuicoes.png)
 
-Figura 1. Classes e clima por partição; cada barra representa contagem de imagens.
+Figura 5. Quantidade de imagens por classe e clima em cada partição.
 
-A amostragem usa cotas proporcionais por classe, câmera e clima dentro de cada partição,
-com maiores restos e semente 42. Não se forçou balanceamento do teste. A proporção das
-classes varia entre partições; por isso, a acurácia isolada não é suficiente para a análise.
-O F1 macro atribui peso igual às duas classes na seleção.
+O teste mantém a proporção observada nas listas, sem balanceamento artificial. Como essa
+proporção varia entre as partições, a avaliação precisa considerar o desempenho das duas
+classes, além da acurácia total. Esse ponto motiva a escolha do F1 macro na seleção.
+
+O arquivo foi obtido da release oficial dos autores, que informa licença ODbL 1.0. URL,
+tamanho e hash do download estão registrados na auditoria. Os exemplos visuais deste
+relatório são derivados do CNRPark+EXT e mantêm sua atribuição.
 
 <!-- PAGEBREAK -->
 
-## 4. Exploração e independência das partições
+## 4. O que muda entre treino e teste
 
-![Exemplos de treino]({{figuras}}/exemplos_treino.png)
+![Exemplos do treinamento]({{figuras}}/exemplos_treino.png)
 
-Figura 2. Exemplos apenas de treino. Origem: CNRPark+EXT, subconjunto CNR-EXT.
+Figura 6. Exemplos de treino nas duas classes e em diferentes condições climáticas.
+Origem: CNRPark+EXT, subconjunto CNR-EXT.
 
-Os exemplos permitem observar perspectiva, oclusão e iluminação sem consultar as predições
-de teste. A auditoria também registra resoluções e distribuições por câmera, data e clima.
-O redimensionamento para 128 × 128 mantém a dimensão constante dos descritores. Não foram
-aplicadas transformações aleatórias ou aumento de dados.
+Os exemplos mostram que a classificação depende de mais do que a presença de uma grande
+região correspondente a um carro. A perspectiva muda entre câmeras; árvores e outros
+elementos encobrem partes das vagas; e sombras podem alterar a aparência do pavimento.
+Essas variações ajudam a compreender por que descritores diferentes podem cometer erros
+diferentes.
+
+Todas as imagens são redimensionadas para **128 × 128** antes da extração, para manter a
+dimensão dos vetores constante. A leitura converte explicitamente BGR para RGB. HOG e LBP
+recebem a versão em cinza inteiro; HSV utiliza a imagem colorida. Não aplicamos aumento
+de dados ou transformações aleatórias.
 
 Na amostra final, treino e teste compartilham **{{sobreposicao_camera}} câmeras** e
-**{{sobreposicao_slot}} identificadores de vagas**. Há **{{sobreposicao_date}} datas** e
-**{{sobreposicao_capture}} capturas câmera/horário em comum** entre os dois conjuntos.
-As contagens das demais combinações estão na auditoria versionada.
+**{{sobreposicao_slot}} identificadores de vagas**. Por outro lado, há **{{sobreposicao_date}}
+datas** e **{{sobreposicao_capture}} capturas de câmera e horário em comum** entre eles.
+Portanto, o experimento avalia dias diferentes das mesmas câmeras e vagas.
 
-Essa estrutura avalia dias distintos do mesmo estacionamento. Mesmo sem duplicatas exatas,
-o fundo e a geometria das vagas podem permanecer reconhecíveis. As imagens não constituem
-observações totalmente independentes de vagas novas. Generalização para câmeras ou locais
-inéditos exigiria outro protocolo, que está fora do escopo desta entrega.
+Essa distinção orienta a leitura dos resultados. A separação por dias reduz a proximidade
+temporal entre treino e teste, mas o fundo e a geometria das vagas permanecem reconhecíveis.
+Para avaliar uma câmera ou um estacionamento novo, seria necessário reservar esses cenários
+em outro protocolo. O estudo atual fornece uma referência para o problema nas condições
+descritas, sem demonstrar essa generalização mais ampla.
 
 <!-- PAGEBREAK -->
 
-## 5. Protocolo experimental
+## 5. Como os modelos foram comparados
 
-### Treinamento e seleção
+### Aprender, escolher e avaliar
 
-O manifesto contém identificador, caminho relativo, classe, câmera, data, horário, vaga, clima
-e partição. Seu hash conecta os dados aos caches e modelos. Os arquivos locais são conferidos
-com o hash auditado durante a extração, para detectar mudanças posteriores à limpeza.
+Cada configuração foi ajustada somente nas **{{n_treino}} imagens de treino**. O StandardScaler
+aprende a média e o desvio nesse conjunto e apenas transforma validação e teste. Para cada
+representação, avaliamos quatro valores de C: **0,01; 0,1; 1; 10**. Os parâmetros dos
+descritores permaneceram fixos, conforme a seção 2.
 
-Cada configuração foi ajustada somente nas {{n_treino}} imagens de treino. StandardScaler aprende
-média e desvio no treino e apenas transforma validação e teste. O SVM usa semente 42,
-dual automático, tolerância 1e-4 e limite de 20.000 iterações. Não convergência interrompe
-o treinamento, impedindo que um ajuste incompleto seja aceito silenciosamente.
+A escolha considera o maior F1 macro na validação, arredondado a quatro casas decimais.
+Empates favorecem o vetor de menor dimensão e depois o menor C. A regra define a melhor
+configuração de cada representação e o modelo escolhido para a discussão principal. Os
+modelos não foram reajustados com os dados de validação.
 
-São avaliados C = 0,01; 0,1; 1; 10 em cada representação. O maior F1 macro na validação,
-arredondado a quatro casas, define o vencedor. Empates favorecem menor dimensão e depois
-menor C. A mesma regra seleciona C por representação e o vencedor global. Não há retreino
-com a validação. Os parâmetros dos descritores foram fixados antes dos experimentos.
+Depois da escolha, os modelos e suas configurações foram congelados. Só então executamos
+um lote de avaliação no teste, usando as mesmas imagens para todos. O resultado desse lote
+não foi usado para ajustar os métodos. Incluímos ainda uma referência simples: prever
+sempre a classe mais frequente no treino, para verificar o quanto cada método supera
+uma decisão que não observa a imagem.
 
-### Congelamento e teste
+### Como interpretar as métricas
 
-O congelamento registra modelos, hashes, configuração e vencedor. A avaliação verifica esses
-artefatos e abre um lote para todos os modelos. Um marcador impede repetir o teste no mesmo
-estudo. As predições do teste não orientam hiperparâmetros, limiar ou escolha de representação.
-O classificador majoritário aprende no treino a classe mais frequente e a prevê em todos os casos.
+A **acurácia** é a fração total de previsões corretas. Ela oferece uma visão geral, mas
+pode ocultar diferenças entre as classes. Por exemplo, prever sempre ocupada acerta muitos
+casos quando essa classe é predominante, embora nenhuma vaga livre seja reconhecida.
 
-### Métricas
+A **precisão** de uma classe indica quantas de suas previsões estão corretas. O **recall**
+indica quantos exemplos reais dessa classe foram encontrados. O **F1** combina precisão
+e recall pela média harmônica. Por fim, o **F1 macro** calcula a média dos F1 das duas
+classes, atribuindo a elas o mesmo peso. Por esse motivo, ele foi adotado para a seleção.
 
-Acurácia é a fração correta. Precisão relaciona acertos às previsões de uma classe; recall
-relaciona acertos aos exemplos reais daquela classe. F1 é a média harmônica de precisão e
-recall, e F1 macro é a média dos F1 das duas classes. Os rótulos são fixos em [0,1], com zero
-quando um denominador é nulo. Matrizes têm linhas verdadeiras e colunas previstas.
+Nas matrizes de confusão, as linhas representam os rótulos reais e as colunas, as previsões.
+Também apresentamos métricas por clima, acompanhadas do tamanho e da composição de cada
+grupo. Os rótulos usados nos cálculos são sempre [0,1], com resultado zero quando um
+denominador é nulo. As pontuações da SVM não são tratadas como probabilidades calibradas.
 
-Os resultados por clima incluem tamanho e composição dos grupos. A pontuação de decisão do
-SVM é exportada, mas não é uma probabilidade calibrada. Não se alterou o limiar padrão de decisão.
+### Condições de execução
 
-### Custos e rastreabilidade
+O SVM usa semente 42, escolha automática do modo dual, tolerância 1e-4 e limite de 20.000
+iterações. Uma falha de convergência interrompe o ajuste. A extração mede leitura,
+verificação da imagem, redimensionamento e cálculo do descritor; o treinamento inclui
+a padronização; e a inferência mede padronização e previsão em lote. Os tempos por
+imagem são médias desse lote, sem estimativa de variabilidade entre execuções.
 
-A extração mede leitura, verificação de hash, redimensionamento e descrição. O treinamento
-inclui o escalonamento. A inferência mede escalonamento e predição em lote, sem exportação
-das pontuações ou figuras. Valores em ms/imagem são médias do lote, não latência em produção.
-Não foram realizadas repetições para estimar variância de tempo ou intervalos de confiança.
-
-O SHA-256 completo do manifesto está em auditoria.json e congelamento.json. Seus primeiros
-32 caracteres são registrados na conclusão para permitir conferência da identidade experimental.
+O manifesto e os artefatos são identificados por hashes. O código verifica sua integridade
+e bloqueia a sobrescrita do teste já avaliado. As instruções de reprodução estão no
+repositório, junto dos registros de parâmetros e versões.
 
 <!-- PAGEBREAK -->
 
 ## 6. Resultados de validação e teste
 
+A Tabela 2 reúne todos os ajustes previstos. Ela mostra como cada representação respondeu
+à mudança de C e permite acompanhar a escolha feita antes da avaliação final.
+
 {{tabela_validacao}}
 
-Tabela 2. Todos os ajustes planejados. O tempo inclui escalonamento, mas não extração.
+Tabela 2. F1 macro na validação e tempo de ajuste, incluindo a padronização.
 
-A seleção global escolheu **{{vencedor}}**, C={{c}}, com F1 macro **{{val_f1}}**.
-Cada representação preserva seu melhor C de validação. Uma concatenação maior pode acrescentar
-informação ou redundância; não se assumiu previamente que ela deveria vencer.
+A validação selecionou **{{vencedor}} + SVM**, com C={{c}} e F1 macro **{{val_f1}}**.
+LBP e a combinação ficaram muito próximos nessa etapa. Essa diferença pequena define a
+escolha pelo protocolo adotado, mas não demonstra superioridade estatística.
 
 {{tabela_teste}}
 
-Tabela 3. Mesmas {{n_teste}} imagens para todos os modelos. O majoritário não tem descritor nem C.
+Tabela 3. Avaliação nas mesmas {{n_teste}} imagens reservadas para teste.
 
-O vencedor de validação atingiu F1 macro **{{teste_f1}}** e acurácia **{{teste_acc}}**.
-A diferença de F1 macro em relação ao majoritário foi **{{ganho_f1}}**. {{nota_ranking}}
-O ranking do teste é descritivo e não autoriza alterar a seleção previamente congelada.
+O modelo selecionado alcançou F1 macro **{{teste_f1}}** e acurácia **{{teste_acc}}**.
+O ganho de F1 macro sobre a referência majoritária foi **{{ganho_f1}}**. {{nota_ranking}}
+Essa mudança de ranking mostra que a ordenação observada na validação não se reproduz
+exatamente em outros dias. O teste permite observar essa diferença, sem redefinir a escolha.
 
 <!-- PAGEBREAK -->
 
-## 7. Desempenho por classe e custo
+## 7. O desempenho de cada classe
 
-![Comparação]({{figuras}}/comparacao.png)
+![Comparação no teste]({{figuras}}/comparacao.png)
 
-Figura 3. Acurácia e F1 macro no teste. Diferenças não foram submetidas a teste de significância.
+Figura 7. Acurácia e F1 macro no teste. As diferenças são descritivas, sem teste de significância.
 
 {{tabela_classes}}
 
-Tabela 4. P: precisão; R: recall. O suporte de cada classe está na Tabela 1.
+Tabela 4. Precisão (P), recall (R) e F1 por classe. Os suportes estão na Tabela 1.
 
-![Matriz do vencedor]({{figuras}}/confusao_vencedor.png)
+![Matriz de confusão]({{figuras}}/confusao_vencedor.png)
 
-Figura 4. Matriz do vencedor por validação, em contagens e percentuais por classe verdadeira.
+Figura 8. Matriz do modelo selecionado: contagens e percentuais por classe verdadeira.
 
-O vencedor classificou **{{ocupada_livre}} vagas ocupadas como livres** e **{{livre_ocupada}}
+O modelo classificou **{{ocupada_livre}} vagas ocupadas como livres** e **{{livre_ocupada}}
 livres como ocupadas**. O primeiro erro pode encaminhar alguém a uma vaga indisponível;
-o segundo pode ocultar uma oportunidade real. O recall da classe ocupada foi **{{recall_ocupada}}**.
-Não houve ajuste de limiar para privilegiar uma direção de erro.
+o segundo pode ocultar uma oportunidade real. O recall da classe ocupada foi
+**{{recall_ocupada}}**. Mantivemos o limiar padrão, sem favorecer uma direção de erro.
 
 <!-- PAGEBREAK -->
 
@@ -231,78 +316,82 @@ Não houve ajuste de limiar para privilegiar uma direção de erro.
 
 {{tabela_tempos}}
 
-Tabela 5. O ajuste refere-se ao melhor C de cada representação, não ao custo total da busca.
-O majoritário não exige extração. A extração da combinação recalcula os três descritores;
-o experimento não usa concatenação gratuita de caches para medir esse custo.
+Tabela 5. Custo de cada configuração selecionada. O ajuste corresponde ao melhor C de
+cada representação; o tempo total da busca é maior.
 
-Tempos dependem de hardware, cache, carga e tamanho do lote. O escalonamento está incluído
-na predição; aquisição, auditoria, gravação de caches, métricas e figuras ficam fora dela.
-Uma comparação em tempo real precisaria medir o fluxo completo no equipamento alvo.
+LBP descreve cada imagem com dez valores, enquanto HOG utiliza 8.100 e a combinação,
+8.158. Essa diferença ajuda a interpretar o compromisso entre capacidade de representação
+e custo. A extração da combinação recalcula os três descritores. Os tempos também
+dependem da máquina, do cache e da carga; uma medição menor em um caso não estabelece
+que ele será sempre mais rápido. A latência de uma aplicação precisaria incluir o fluxo completo.
 
 {{tabela_clima}}
 
-Tabela 6. F1 macro por clima, com tamanho e composição dos grupos.
+Tabela 6. F1 macro por clima, com número de exemplos livres e ocupados em cada grupo.
+Combin.: combinação de HSV, LBP e HOG.
 
-![Clima]({{figuras}}/clima.png)
+![Resultados por clima]({{figuras}}/clima.png)
 
-Figura 5. Desagregação do teste por clima, sem treinamento ou ajuste específico por condição.
+Figura 9. Desempenho dos mesmos modelos congelados nas condições climáticas do teste.
 
-Para o vencedor, o menor F1 macro por clima ocorreu em **{{pior_clima}}**. Essa diferença
-é observacional: clima está associado a datas, iluminação e composição das cenas. Grupos
-menores e desbalanceados são mais sensíveis a poucos erros. Não há demonstração causal
-de efeito da chuva, nem avaliação de uma condição climática ausente do treinamento.
+Para o modelo selecionado, o menor F1 macro ocorreu em **{{pior_clima}}**. A diferença
+deve ser lida junto das contagens: os grupos têm tamanhos e proporções de classe diferentes.
+Além disso, clima, data, iluminação e composição das cenas variam juntos. Esses resultados
+descrevem onde o desempenho mudou, sem isolar a causa ou avaliar um clima inédito.
 
 <!-- PAGEBREAK -->
 
-## 9. Análise qualitativa dos erros
+## 9. O que os erros ajudam a entender
 
-![Erros ilustrativos]({{figuras}}/erros_vencedor.png)
+![Exemplos de erros]({{figuras}}/erros_vencedor.png)
 
-Figura 6. Até seis exemplos de cada direção de erro, amostrados com semente 42.
-Origem: CNRPark+EXT. Identificadores e predições estão em erros_selecionados.csv.
+Figura 10. Até seis exemplos de cada direção de erro, amostrados com semente 42.
+Origem: CNRPark+EXT. Os identificadores estão em erros_selecionados.csv.
 
 {{analise_erros}}
 
-Os exemplos foram escolhidos entre erros para interpretação, não para estimar frequência de
-causas. Um painel de até 12 casos não constitui uma auditoria semântica completa do teste.
-As observações não foram usadas para ajustar C, representação ou teste desta execução.
+Esses casos ajudam a relacionar os números às imagens, mas não medem a frequência das
+possíveis causas. Uma análise sistemática exigiria examinar e anotar um conjunto maior.
+Aqui, a inspeção serve para discutir os limites do modelo; ela não foi usada para ajustar
+os parâmetros ou modificar o teste.
 
 <!-- PAGEBREAK -->
 
-## 10. Discussão, conclusão e reprodução
+## 10. Discussão e conclusão
 
-A configuração **{{vencedor}} com C={{c}}** foi selecionada pelo protocolo predefinido e
-alcançou **{{teste_f1}} de F1 macro**. A diferença para a referência majoritária foi
-**{{ganho_f1}}**. {{nota_ranking}} O estudo compara configurações concretas de descritores;
-não identifica o melhor método possível para todo cenário de estacionamento.
+O estudo mostrou que descritores clássicos conseguem distinguir vagas livres e ocupadas
+nas condições avaliadas. A configuração **{{vencedor}} + SVM, C={{c}}**, escolhida na
+validação, atingiu **{{teste_f1}} de F1 macro** no teste e superou a referência majoritária
+em **{{ganho_f1}}**. {{nota_ranking}}
 
-A comparação mantém dados, resolução, classificador e regra de seleção constantes, mas as
-representações diferem em dimensão, custo e informação. Não foram estudados outros kernels,
-ponderações da concatenação ou parâmetros de HOG e LBP. Diferenças pequenas são descritivas,
-sem alegação de superioridade estatística. Não há avaliação de rede neural nesta entrega.
+O contraste entre LBP e a combinação é o principal resultado da comparação. LBP oferece
+uma descrição compacta e foi suficiente para obter o melhor valor de validação. A combinação,
+por sua vez, apresentou o maior F1 macro no teste, com um vetor muito maior. Cor, textura
+e contornos podem se complementar, mas o benefício observado depende dos dados e deve
+ser considerado junto do custo. O experimento não permite escolher um vencedor universal.
 
-As principais limitações são um único estacionamento, reutilização de câmeras e vagas,
-uma amostragem, ausência de intervalos de confiança e apenas uma execução de tempo. Separar
-os dias reduz correlações temporais imediatas, mas não elimina pistas do fundo. Não se pode
-extrapolar as métricas para câmera, estacionamento ou fluxo operacional inéditos.
+Há limitações importantes: as imagens vêm de um único estacionamento, com as mesmas
+câmeras e vagas nas partições; utilizamos uma amostragem e uma execução de tempo; e não
+calculamos intervalos de confiança. Também não investigamos outros kernels, parâmetros
+dos descritores ou pesos para os blocos da combinação. As conclusões ficam restritas às
+configurações e ao subconjunto apresentados.
 
-No T2, a comparação com uma CNN deverá manter manifesto, teste, classes e métricas. Novos
-experimentos de generalização precisam de outro protocolo, sem ajustes repetidos neste teste.
+Para o T2, o próximo passo é comparar essa referência clássica com uma CNN, preservando
+o manifesto, as classes, as métricas e o teste. Uma avaliação de câmeras ou estacionamentos
+novos deverá ser planejada separadamente.
 
-### Reprodução
+### Reprodução do estudo
 
-Código e comandos: README.md e docs/reproducao.md. Sistema: {{ambiente}}.
-Processador informado pelo sistema: {{processador}}. Commit do treinamento: {{commit_treino}};
-commit da avaliação: {{commit_teste}}. O arquivo requirements-lock.txt registra o ambiente completo.
+O README e docs/reproducao.md apresentam os comandos. O ambiente foi **{{ambiente}}**;
+o processador é identificado pelo sistema como {{processador}}. Os commits que registram
+o código de treinamento e avaliação são {{commit_treino}} e {{commit_teste}}, respectivamente.
 
 {{tabela_versoes}}
 
-Identidade do manifesto (SHA-256):
+O arquivo requirements-lock.txt registra o ambiente completo. A identidade SHA-256 do
+manifesto permite conferir se uma reprodução utiliza exatamente as mesmas imagens:
 
 `{{manifest_hash}}`
-
-As listas preservam caminhos relativos, e os artefatos de proveniência registram configurações,
-versões e hashes. Dados e modelos não são versionados; podem ser obtidos e treinados novamente.
 
 <!-- PAGEBREAK -->
 
@@ -311,7 +400,7 @@ versões e hashes. Dados e modelos não são versionados; podem ser obtidos e tr
 [1] Amato, G.; Carrara, F.; Falchi, F.; Gennaro, C.; Meghini, C.; Vairo, C.
 Deep learning for decentralized parking lot occupancy detection. Expert Systems with
 Applications, 72, 327-334, 2017. DOI: 10.1016/j.eswa.2016.10.055.
-Dataset: http://cnrpark.it/ . Código e arquivos oficiais: github.com/fabiocarrara/deep-parking.
+Dataset: http://cnrpark.it/ . Arquivos oficiais: github.com/fabiocarrara/deep-parking.
 
 [2] Dalal, N.; Triggs, B. Histograms of Oriented Gradients for Human Detection.
 IEEE Conference on Computer Vision and Pattern Recognition, 2005.
@@ -324,23 +413,22 @@ Analysis and Machine Intelligence, 24(7), 971-987, 2002. DOI: 10.1109/TPAMI.2002
 [4] Cortes, C.; Vapnik, V. Support-vector networks. Machine Learning, 20, 273-297,
 1995. DOI: 10.1007/BF00994018.
 
-### Documentação das implementações
+### Implementações utilizadas
 
 OpenCV: docs.opencv.org . scikit-image: scikit-image.org/docs/stable/api/skimage.feature.html .
 scikit-learn: scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html .
-As versões efetivamente utilizadas constam da seção de reprodução e dos arquivos de proveniência.
+As versões efetivamente utilizadas constam da seção de reprodução e dos registros do experimento.
 
-### Localização das evidências
+### Onde encontrar as evidências
 
-- data/manifests/t1.csv: identidade, rótulos e partições das {{n_total}} imagens do estudo original.
-- resultados/t1/metricas/auditoria.json: aquisição, limpeza e sobreposições.
-- resultados/t1/metricas/validacao.csv: todos os ajustes e critérios de seleção.
-- resultados/t1/metricas/congelamento.json: vencedor, modelos e hashes.
-- resultados/t1/metricas/teste.csv: métricas e custos finais.
-- resultados/t1/metricas/clima.csv: métricas e suportes por condição.
-- resultados/t1/predicoes/: previsões individuais dos cinco modelos.
-- resultados/t1/figuras/: imagens reproduzidas neste relatório.
+O repositório reúne o manifesto em data/manifests/t1.csv; auditoria, parâmetros, métricas
+e tempos em resultados/t1/metricas/; e as previsões individuais em resultados/t1/predicoes/.
+Os arquivos validacao.csv, congelamento.json, teste.csv e clima.csv permitem acompanhar,
+respectivamente, a seleção, a escolha preservada, a avaliação final e sua divisão por clima.
 
-O arquivo referencias.bib acompanha a fonte Markdown para permitir migração a outro modelo
-de relatório sem redigitar os dados bibliográficos. A paginação e as figuras do PDF devem
-ser conferidas sempre que o texto ou os resultados forem atualizados.
+As figuras de resultados ficam em resultados/t1/figuras/. As ilustrações dos métodos estão
+em docs/imagens/, junto dos identificadores e hashes dos exemplos de treino. Os comandos
+para recriá-las e a explicação de cada painel estão em docs/metodos.md.
+
+A fonte do relatório é Markdown, acompanhada de referencias.bib e do PDF. Os dados brutos
+e os modelos treinados ficam fora do Git; a documentação explica como obtê-los ou recriá-los.

@@ -16,6 +16,7 @@ python -m venv .venv
 
 Consulte [reprodução](docs/reproducao.md), [dataset](docs/dataset.md),
 [metodologia](docs/metodologia.md) e [planejamento](docs/planejamento.md).
+Veja também a [explicação visual de HSV, LBP e HOG](docs/metodos.md), com exemplos reais de treino.
 
 Datasets, caches e modelos não são versionados. Não há CNN nem detector de vagas neste T1.
 

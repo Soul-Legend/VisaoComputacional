@@ -26,6 +26,13 @@ def escrever_markdown(config):
     validation = pd.read_csv(base / "metricas/validacao.csv")
     climate = pd.read_csv(base / "metricas/clima.csv")
     winner = freeze["selected"]
+    names = {
+        "hog": "HOG",
+        "hsv": "HSV",
+        "lbp": "LBP",
+        "combinado": "Combinação",
+        "majoritario": "Majoritário",
+    }
     best, dummy = test.loc[winner], test.loc["majoritario"]
     selected = next(r for r in freeze["models"] if r["descriptor"] == winner)
     prediction = pd.read_csv(base / "predicoes" / f"{winner}.csv")
@@ -34,7 +41,7 @@ def escrever_markdown(config):
         "n_total": f"{len(frame):,}".replace(",", "."),
         "n_treino": f"{int(counts.loc['treino'].sum()):,}".replace(",", "."),
         "n_teste": f"{int(counts.loc['teste'].sum()):,}".replace(",", "."),
-        "vencedor": winner,
+        "vencedor": names[winner],
         "c": f"{selected['C']:g}",
         "val_f1": f"{selected['validation_f1_macro']:.4f}",
         "teste_f1": f"{best.f1_macro:.4f}",
@@ -64,7 +71,7 @@ def escrever_markdown(config):
         ["Descritor", "C", "Dimensão", "F1 macro", "Ajuste (s)"],
         [
             [
-                r.descriptor,
+                names[r.descriptor],
                 f"{r.C:g}",
                 r.dimension,
                 f"{r.validation_f1_macro:.4f}",
@@ -76,7 +83,7 @@ def escrever_markdown(config):
     replacements["tabela_teste"] = tabela(
         ["Descritor", "Acurácia", "F1 macro", "C"],
         [
-            [n, f"{r.accuracy:.4f}", f"{r.f1_macro:.4f}", "-" if n == "majoritario" else f"{r.C:g}"]
+            [names[n], f"{r.accuracy:.4f}", f"{r.f1_macro:.4f}", "-" if n == "majoritario" else f"{r.C:g}"]
             for n, r in test.iterrows()
         ],
     )
@@ -84,7 +91,7 @@ def escrever_markdown(config):
         ["Descritor", "P livre", "R livre", "F1 livre", "P ocup.", "R ocup.", "F1 ocup."],
         [
             [
-                n,
+                names[n],
                 *[
                     f"{r[k]:.3f}"
                     for k in (
@@ -104,7 +111,7 @@ def escrever_markdown(config):
         ["Descritor", "Dim.", "Ajuste (s)", "Extr. ms/img", "Pred. ms/img"],
         [
             [
-                n,
+                names[n],
                 int(r.dimension),
                 f"{r.training_seconds:.3f}",
                 f"{r.extraction_ms_per_image:.3f}",
@@ -115,7 +122,7 @@ def escrever_markdown(config):
     )
     pivot = climate.pivot(index="weather", columns="descriptor", values="f1_macro")
     replacements["tabela_clima"] = tabela(
-        ["Clima", "N", "Livre", "Ocup.", *test.index.tolist()],
+        ["Clima", "N", "Livre", "Ocup.", *["Combin." if n == "combinado" else names[n] for n in test.index]],
         [
             [
                 w,
@@ -138,7 +145,11 @@ def escrever_markdown(config):
     replacements["nota_ranking"] = (
         "O vencedor de validação também alcançou o maior F1 macro de teste entre os métodos clássicos."
         if ranked == winner
-        else f"No teste, {ranked} obteve o maior F1 macro. Isso não altera a seleção realizada pela validação."
+        else (
+            "No teste, a combinação dos três descritores obteve o maior F1 macro. A escolha feita na validação foi mantida."
+            if ranked == "combinado"
+            else f"No teste, {names[ranked]} obteve o maior F1 macro. A escolha feita na validação foi mantida."
+        )
     )
     report_dir = Path(config["report_dir"])
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -212,7 +223,7 @@ def renderizar_pdf(source, output):
             if images:
                 for image in images:
                     graphic = Image(str(source.parent / image.attrGet("src")))
-                    scale = min(width / graphic.imageWidth, 10.5 * cm / graphic.imageHeight)
+                    scale = min(width / graphic.imageWidth, 11.5 * cm / graphic.imageHeight)
                     graphic.drawWidth, graphic.drawHeight = (
                         graphic.imageWidth * scale,
                         graphic.imageHeight * scale,
