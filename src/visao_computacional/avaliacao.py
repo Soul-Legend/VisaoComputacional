@@ -1,4 +1,5 @@
 """Lote final de teste, sem alteracao do vencedor escolhido na validacao."""
+
 from pathlib import Path
 from time import perf_counter
 
@@ -15,12 +16,22 @@ from .treinamento import carregar_congelamento
 
 def metricas(y, predicted):
     precision, recall, f1, support = precision_recall_fscore_support(
-        y, predicted, labels=[0, 1], zero_division=0)
-    result = {"n": len(y), "accuracy": float(accuracy_score(y, predicted)),
-              "f1_macro": float(f1_score(y, predicted, labels=[0, 1], average="macro", zero_division=0))}
+        y, predicted, labels=[0, 1], zero_division=0
+    )
+    result = {
+        "n": len(y),
+        "accuracy": float(accuracy_score(y, predicted)),
+        "f1_macro": float(f1_score(y, predicted, labels=[0, 1], average="macro", zero_division=0)),
+    }
     for i, name in enumerate(("livre", "ocupada")):
-        result.update({f"precision_{name}": float(precision[i]), f"recall_{name}": float(recall[i]),
-                       f"f1_{name}": float(f1[i]), f"n_{name}": int(support[i])})
+        result.update(
+            {
+                f"precision_{name}": float(precision[i]),
+                f"recall_{name}": float(recall[i]),
+                f"f1_{name}": float(f1[i]),
+                f"n_{name}": int(support[i]),
+            }
+        )
     return result
 
 
@@ -63,21 +74,36 @@ def avaliar(config):
         predictions["predicted"] = predicted
         predictions["decision_score"] = scores
         predictions.to_csv(prediction_dir / f"{name}.csv", index=False)
-        row = {"descriptor": name, **metricas(y, predicted), "dimension": item["dimension"], "C": item["C"],
-               "training_seconds": item["training_seconds"], "inference_seconds": seconds,
-               "inference_ms_per_image": seconds * 1000 / len(test), "extraction_seconds": extraction,
-               "extraction_ms_per_image": extraction * 1000 / len(test)}
+        row = {
+            "descriptor": name,
+            **metricas(y, predicted),
+            "dimension": item["dimension"],
+            "C": item["C"],
+            "training_seconds": item["training_seconds"],
+            "inference_seconds": seconds,
+            "inference_ms_per_image": seconds * 1000 / len(test),
+            "extraction_seconds": extraction,
+            "extraction_ms_per_image": extraction * 1000 / len(test),
+        }
         rows.append(row)
         matrix = confusion_matrix(y, predicted, labels=[0, 1])
         pd.DataFrame(matrix, index=["livre", "ocupada"], columns=["livre", "ocupada"]).to_csv(
-            metrics_dir / f"confusao_{name}.csv", index_label="verdadeiro")
+            metrics_dir / f"confusao_{name}.csv", index_label="verdadeiro"
+        )
         for weather, group in predictions.groupby("weather", sort=True):
-            climate_rows.append({"descriptor": name, "weather": weather,
-                                 **metricas(group.label, group.predicted)})
+            climate_rows.append(
+                {"descriptor": name, "weather": weather, **metricas(group.label, group.predicted)}
+            )
         print(f"Teste {name}: F1 macro={row['f1_macro']:.4f}, acuracia={row['accuracy']:.4f}", flush=True)
     pd.DataFrame(rows).to_csv(metrics_dir / "teste.csv", index=False)
     pd.DataFrame(climate_rows).to_csv(metrics_dir / "clima.csv", index=False)
-    salvar_json(metrics_dir / "avaliacao.json", {"selected": freeze["selected"], "provenance": proveniencia(config),
-                "freeze_sha256": sha256_file(metrics_dir / "congelamento.json"),
-                "test_table_sha256": sha256_file(metrics_dir / "teste.csv"),
-                "prediction_sha256": {p.name: sha256_file(p) for p in prediction_dir.glob("*.csv")}})
+    salvar_json(
+        metrics_dir / "avaliacao.json",
+        {
+            "selected": freeze["selected"],
+            "provenance": proveniencia(config),
+            "freeze_sha256": sha256_file(metrics_dir / "congelamento.json"),
+            "test_table_sha256": sha256_file(metrics_dir / "teste.csv"),
+            "prediction_sha256": {p.name: sha256_file(p) for p in prediction_dir.glob("*.csv")},
+        },
+    )

@@ -1,4 +1,5 @@
 """Leitura RGB e redimensionamento uniforme."""
+
 from pathlib import Path
 
 import cv2

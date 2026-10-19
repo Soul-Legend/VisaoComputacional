@@ -1,20 +1,28 @@
 """Extracao e cache de caracteristicas com identidade experimental verificavel."""
+
 import hashlib
 import json
 from pathlib import Path
 from time import perf_counter
 
-import numpy as np
 import cv2
+import numpy as np
 from skimage.feature import hog, local_binary_pattern
 
 from .configuracao import salvar_json, sha256_file
-from .dados import carregar_manifesto, caminho_seguro
+from .dados import caminho_seguro, carregar_manifesto
 from .preprocessamento import cinza, ler_rgb
 
 IMPLEMENTACAO = 1
-PARAMETROS = ("image_size", "hist_bins", "lbp_points", "lbp_radius", "hog_orientations",
-              "hog_pixels_per_cell", "hog_cells_per_block")
+PARAMETROS = (
+    "image_size",
+    "hist_bins",
+    "lbp_points",
+    "lbp_radius",
+    "hog_orientations",
+    "hog_pixels_per_cell",
+    "hog_cells_per_block",
+)
 
 
 def assinatura(config):
@@ -40,9 +48,13 @@ def vetor(rgb, name, config):
         hist = np.histogram(codes, bins=points + 2, range=(0, points + 2))[0]
         result = hist / hist.sum()
     elif name == "hog":
-        result = hog(cinza(rgb), orientations=config["hog_orientations"],
-                     pixels_per_cell=tuple(config["hog_pixels_per_cell"]),
-                     cells_per_block=tuple(config["hog_cells_per_block"]), block_norm="L2-Hys")
+        result = hog(
+            cinza(rgb),
+            orientations=config["hog_orientations"],
+            pixels_per_cell=tuple(config["hog_pixels_per_cell"]),
+            cells_per_block=tuple(config["hog_cells_per_block"]),
+            block_norm="L2-Hys",
+        )
     else:
         raise ValueError(f"Descritor desconhecido: {name}")
     result = np.asarray(result, dtype=np.float32)
@@ -77,9 +89,17 @@ def extrair(config):
                 print(f"{name}: {i + 1}/{len(frame)}", flush=True)
         matrix = np.stack(vectors)
         np.savez_compressed(path, X=matrix, ids=frame.id.to_numpy(dtype=str), signature=signature)
-        salvar_json(metadata, {"signature": signature, "npz_sha256": sha256_file(path),
-                              "descriptor": name, "dimension": matrix.shape[1], "n": len(frame),
-                              "extraction_seconds": elapsed})
+        salvar_json(
+            metadata,
+            {
+                "signature": signature,
+                "npz_sha256": sha256_file(path),
+                "descriptor": name,
+                "dimension": matrix.shape[1],
+                "n": len(frame),
+                "extraction_seconds": elapsed,
+            },
+        )
 
 
 def carregar_cache(config, name, frame=None):

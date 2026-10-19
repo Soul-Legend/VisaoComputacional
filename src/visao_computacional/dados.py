@@ -1,9 +1,12 @@
 """Aquisicao oficial, auditoria e amostragem deterministica do CNR-EXT."""
+
 import hashlib
 import re
 import urllib.request
 import zipfile
-from pathlib import Path
+from contextlib import nullcontext
+from functools import lru_cache
+from pathlib import Path, PurePosixPath
 
 import cv2
 import numpy as np
@@ -15,6 +18,7 @@ URL = "https://github.com/fabiocarrara/deep-parking/releases/download/archive/CN
 PARTICOES = ("treino", "validacao", "teste")
 
 
+@lru_cache(maxsize=12000)
 def caminho_seguro(root, relative):
     root = Path(root).resolve()
     path = (root / relative).resolve()
@@ -36,10 +40,16 @@ def baixar(config):
             caminho_seguro(root, member.filename)
         print(f"Extraindo {len(zipped.infolist())} entradas...", flush=True)
         zipped.extractall(root)
-    salvar_json(root.parent / "aquisicao.json", {
-        "url": URL, "sha256": sha256_file(archive), "bytes": archive.stat().st_size,
-        "licenca": "ODbL-1.0", "origem": "http://cnrpark.it/",
-    })
+    salvar_json(
+        root.parent / "aquisicao.json",
+        {
+            "url": URL,
+            "sha256": sha256_file(archive),
+            "bytes": archive.stat().st_size,
+            "licenca": "ODbL-1.0",
+            "origem": "http://cnrpark.it/",
+        },
+    )
 
 
 def ler_listas(config):
@@ -54,7 +64,9 @@ def ler_listas(config):
             relative = relative.replace("\\", "/")
             if not relative.startswith("PATCHES/"):
                 relative = "PATCHES/" + relative
-            caminho_seguro(root, relative)
+            pure = PurePosixPath(relative)
+            if pure.is_absolute() or ".." in pure.parts or ":" in relative:
+                raise ValueError(f"Caminho invalido na lista: {relative}")
             match = pattern.search(relative)
             if not match or label not in ("0", "1"):
                 raise ValueError(f"Linha invalida: {line}")
@@ -62,10 +74,20 @@ def ler_listas(config):
             weather = relative.split("/")[1]
             if weather not in ("SUNNY", "OVERCAST", "RAINY"):
                 raise ValueError(f"Clima desconhecido: {weather}")
-            records.append({"id": hashlib.sha256(relative.encode()).hexdigest()[:20],
-                            "path": relative, "label": int(label), "camera": int(camera),
-                            "date": date, "time": time, "slot": int(slot), "weather": weather,
-                            "capture": f"{date}_{time}_C{camera}", "split": split})
+            records.append(
+                {
+                    "id": hashlib.sha256(relative.encode()).hexdigest()[:20],
+                    "path": relative,
+                    "label": int(label),
+                    "camera": int(camera),
+                    "date": date,
+                    "time": time,
+                    "slot": int(slot),
+                    "weather": weather,
+                    "capture": f"{date}_{time}_C{camera}",
+                    "split": split,
+                }
+            )
     frame = pd.DataFrame(records)
     if frame.empty:
         raise ValueError("Listas oficiais vazias")
@@ -92,32 +114,52 @@ def sobreposicoes(frame):
     result = {}
     for field in ("camera", "date", "capture", "slot"):
         sets = {s: set(frame.loc[frame.split == s, field]) for s in PARTICOES}
-        result[field] = {f"{a}/{b}": len(sets[a] & sets[b]) for a, b in
-                         (("treino", "validacao"), ("treino", "teste"), ("validacao", "teste"))}
+        result[field] = {
+            f"{a}/{b}": len(sets[a] & sets[b])
+            for a, b in (("treino", "validacao"), ("treino", "teste"), ("validacao", "teste"))
+        }
     return result
 
 
 def preparar(config):
     target = Path(config["manifest"])
     if target.exists():
-        raise FileExistsError("Manifesto ja congelado. Use outra configuracao e outro caminho para novo estudo.")
+        raise FileExistsError(
+            "Manifesto ja congelado. Use outra configuracao e outro caminho para novo estudo."
+        )
     frame = ler_listas(config)
     count_original = frame.groupby("split").size().to_dict()
     audit_rows = []
-    for i, row in enumerate(frame.itertuples(index=False)):
-        path = caminho_seguro(config["data_root"], row.path)
-        try:
-            content = path.read_bytes()
-            image = cv2.imdecode(np.frombuffer(content, dtype=np.uint8), cv2.IMREAD_COLOR)
-            if image is None:
-                raise ValueError("Imagem ilegivel")
-            audit_rows.append({"path": row.path, "sha256": hashlib.sha256(content).hexdigest(),
-                               "pixel_sha256": hashlib.sha256(str(image.shape).encode() + image.tobytes()).hexdigest(),
-                               "height": image.shape[0], "width": image.shape[1], "error": ""})
-        except (OSError, ValueError) as exc:
-            audit_rows.append({"path": row.path, "error": str(exc)})
-        if (i + 1) % 20000 == 0:
-            print(f"Auditadas {i + 1}/{len(frame)} imagens", flush=True)
+    archive = Path(config["data_root"]).parent / "CNR-EXT-Patches-150x150.zip"
+    # Auditar diretamente os bytes oficiais; a extracao de features reconfere os arquivos locais.
+    context = zipfile.ZipFile(archive) if archive.exists() else nullcontext(None)
+    with context as zipped:
+        for i, row in enumerate(frame.itertuples(index=False)):
+            try:
+                content = (
+                    zipped.read(row.path)
+                    if zipped
+                    else caminho_seguro(config["data_root"], row.path).read_bytes()
+                )
+                image = cv2.imdecode(np.frombuffer(content, dtype=np.uint8), cv2.IMREAD_COLOR)
+                if image is None:
+                    raise ValueError("Imagem ilegivel")
+                audit_rows.append(
+                    {
+                        "path": row.path,
+                        "sha256": hashlib.sha256(content).hexdigest(),
+                        "pixel_sha256": hashlib.sha256(
+                            str(image.shape).encode() + image.tobytes()
+                        ).hexdigest(),
+                        "height": image.shape[0],
+                        "width": image.shape[1],
+                        "error": "",
+                    }
+                )
+            except (OSError, ValueError, KeyError) as exc:
+                audit_rows.append({"path": row.path, "error": str(exc)})
+            if (i + 1) % 20000 == 0:
+                print(f"Auditadas {i + 1}/{len(frame)} imagens", flush=True)
     audited = pd.DataFrame(audit_rows).drop_duplicates("path")
     frame = frame.merge(audited, on="path", validate="many_to_one")
     bad = frame.loc[frame.error != ""].copy()
@@ -130,23 +172,35 @@ def preparar(config):
     good = good.sort_values(["priority", "path"])
     duplicates = good[good.duplicated("pixel_sha256", keep="first")]
     good = good.drop_duplicates("pixel_sha256", keep="first").drop(columns=["priority", "error"])
-    selected = pd.concat([amostrar(good[good.split == s], config["sample_sizes"][s], config["seed"])
-                          for s in PARTICOES], ignore_index=True)
+    selected = pd.concat(
+        [amostrar(good[good.split == s], config["sample_sizes"][s], config["seed"]) for s in PARTICOES],
+        ignore_index=True,
+    )
     validar_manifesto(selected)
     target.parent.mkdir(parents=True, exist_ok=True)
     selected.to_csv(target, index=False, lineterminator="\n")
     metrics = Path(config["results_dir"]) / "metricas"
     metrics.mkdir(parents=True, exist_ok=True)
     for name, excluded in (("ilegíveis", bad), ("conflitos", conflicting), ("duplicatas", duplicates)):
-        excluded[["path", "split", "label"]].to_csv(metrics / f"auditoria_{name.replace('í', 'i')}.csv", index=False)
-    audit = {"original": count_original, "unreadable": len(bad), "conflicting_labels": len(conflicting),
-             "duplicates_removed": len(duplicates), "eligible": good.groupby("split").size().to_dict(),
-             "selected": selected.groupby("split").size().to_dict(),
-             "overlap_original": sobreposicoes(frame), "overlap_selected": sobreposicoes(selected),
-             "manifest_sha256": sha256_file(target), "provenance": proveniencia(config)}
+        excluded[["path", "split", "label"]].to_csv(
+            metrics / f"auditoria_{name.replace('í', 'i')}.csv", index=False
+        )
+    audit = {
+        "original": count_original,
+        "unreadable": len(bad),
+        "conflicting_labels": len(conflicting),
+        "duplicates_removed": len(duplicates),
+        "eligible": good.groupby("split").size().to_dict(),
+        "selected": selected.groupby("split").size().to_dict(),
+        "overlap_original": sobreposicoes(frame),
+        "overlap_selected": sobreposicoes(selected),
+        "manifest_sha256": sha256_file(target),
+        "provenance": proveniencia(config),
+    }
     acquisition = Path(config["data_root"]).parent / "aquisicao.json"
     if acquisition.exists():
         import json
+
         audit["acquisition"] = json.loads(acquisition.read_text())
     salvar_json(metrics / "auditoria.json", audit)
     print(f"Manifesto congelado: {len(selected)} imagens", flush=True)
