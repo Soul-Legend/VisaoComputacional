@@ -1,0 +1,37 @@
+# Protocolo do T2 registrado em docs/planejamento_t2.md.
+seed: 42
+data_root: data/raw/CNR-EXT
+manifest: data/manifests/t1.csv
+processed_dir: data/processed/t2
+models_dir: modelos/t2
+results_dir: resultados/t2
+report_dir: relatorios/final
+t1_config: configs/t1.yaml
+image_size: [128, 128]
+threads: 8
+batch_size: 64
+weight_decay: 0.0001
+cnn:
+  filters: [32, 64, 128]
+  dense: 128
+  dropout: 0.5
+  lr: 0.001
+  max_epochs: 25
+  patience: 6
+mobilenet:
+  weights: IMAGENET1K_V1
+  lr: 0.0001
+  max_epochs: 15
+  patience: 4
+augmentation:
+  rotation_deg: 8
+  zoom: [0.9, 1.1]
+  translate: 0.06
+  brightness: [0.8, 1.2]
+  contrast: [0.8, 1.2]
+augmentation_options: [sem, com]
+extra_seeds: [43, 44]
+bootstrap_resamples: 2000
+loco:
+  svm_descriptors: [lbp, combinado]
+  svm_c: 0.01

@@ -1,0 +1,26 @@
+seed: 42
+data_root: data/raw/CNR-EXT
+manifest: data/manifests/t1.csv
+processed_dir: data/processed
+models_dir: modelos
+results_dir: resultados/t1
+report_dir: relatorios/t1
+split_files:
+  treino: LABELS/train.txt
+  validacao: LABELS/val.txt
+  teste: LABELS/test.txt
+sample_sizes:
+  treino: 7000
+  validacao: 1500
+  teste: 1500
+image_size: [128, 128]
+descriptors: [hog, hsv, lbp, combinado]
+c_values: [0.01, 0.1, 1.0, 10.0]
+svm_max_iter: 20000
+svm_tol: 0.0001
+hist_bins: 16
+lbp_points: 8
+lbp_radius: 1
+hog_orientations: 9
+hog_pixels_per_cell: [8, 8]
+hog_cells_per_block: [2, 2]

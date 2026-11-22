@@ -1,0 +1,112 @@
+{
+  "augmentation": "sem",
+  "svm_c": 0.01,
+  "predictions_sha256": "093d35060ec6f8519bb5a657301d6b23e29c197b1de1a49bb6b6aabb0587a068",
+  "provenance": {
+    "utc": "2026-11-22T00:14:42.358942+00:00",
+    "commit": "94439a2a2d1c277ca0aa32608ac263d54471ec2e",
+    "tracked_dirty": true,
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+    "versions": {
+      "numpy": "2.5.4",
+      "pandas": "2.3.3",
+      "opencv-python-headless": "4.14.0.94",
+      "scikit-image": "0.26.0",
+      "scikit-learn": "1.9.1",
+      "matplotlib": "3.11.2",
+      "PyYAML": "6.0.3",
+      "torch": "2.15.0+cpu",
+      "torchvision": "0.29.2+cpu"
+    },
+    "config": {
+      "seed": 42,
+      "data_root": "data/raw/CNR-EXT",
+      "manifest": "data/manifests/t1.csv",
+      "processed_dir": "data/processed/t2",
+      "models_dir": "modelos/t2",
+      "results_dir": "resultados/t2",
+      "report_dir": "relatorios/final",
+      "t1_config": "D:\\Sandbox\\VisaoComp\\configs\\t1.yaml",
+      "image_size": [
+        128,
+        128
+      ],
+      "threads": 8,
+      "batch_size": 64,
+      "weight_decay": 0.0001,
+      "cnn": {
+        "filters": [
+          32,
+          64,
+          128
+        ],
+        "dense": 128,
+        "dropout": 0.5,
+        "lr": 0.001,
+        "max_epochs": 25,
+        "patience": 6
+      },
+      "mobilenet": {
+        "weights": "IMAGENET1K_V1",
+        "lr": 0.0001,
+        "max_epochs": 15,
+        "patience": 4
+      },
+      "augmentation": {
+        "rotation_deg": 8,
+        "zoom": [
+          0.9,
+          1.1
+        ],
+        "translate": 0.06,
+        "brightness": [
+          0.8,
+          1.2
+        ],
+        "contrast": [
+          0.8,
+          1.2
+        ]
+      },
+      "augmentation_options": [
+        "sem",
+        "com"
+      ],
+      "extra_seeds": [
+        43,
+        44
+      ],
+      "bootstrap_resamples": 2000,
+      "loco": {
+        "svm_descriptors": [
+          "lbp",
+          "combinado"
+        ],
+        "svm_c": 0.01
+      },
+      "config_path": "configs/t2.yaml"
+    },
+    "manifest_sha256": "f7ac99e8b862efdf66d50f9eb641ad29540eda7213c0ce911334bc10765e58ad",
+    "torch_threads": 8,
+    "source_sha256": {
+      "src/visao_computacional/__init__.py": "c0de7af0df6ace5a7dc53d60daac4a7db97375cdee54ec089e2068bc619aa4ba",
+      "src/visao_computacional/avaliacao.py": "8978f8a8c808e8a6bc82f65c4fe47cdb5730ab75fdf3ac754ba3632f68530250",
+      "src/visao_computacional/cli.py": "3c02ed228cda03a6ca430cc5407fb60ee34727a1b4b8f3faeade4cce763457b3",
+      "src/visao_computacional/comparacao.py": "e002d57aa58ef615c986834718bec00b44f478a952af7573a118846c1d8ab200",
+      "src/visao_computacional/configuracao.py": "23e7489976f5d04c12f012b3cbfa74116901681340511d7dd474fc58d9a4d050",
+      "src/visao_computacional/dados.py": "6466e58f3b013b81930bc9f9f4a5652504f82df0a45d3fda52becbddf8260351",
+      "src/visao_computacional/descritores.py": "b835aca9a26d83477088ab3ebe8c863d7926229b920f18335261b0ecebbd7dbc",
+      "src/visao_computacional/ilustracoes.py": "e86bc7c9c9b8da1f14afe5a69a34dbfbd229ca4cded8d316f61816fba6973beb",
+      "src/visao_computacional/preprocessamento.py": "939b2926852e0a99a85a813a5dbe63af82a4ccd10e453a33f88afb44809867a3",
+      "src/visao_computacional/redes.py": "a05dd75ae4ea7ee908b7993b2084a5d864c9a1a8428b628b1f94d432eca41d7a",
+      "src/visao_computacional/relatorio.py": "6ec1bc05301cf2a204570ef455e918048ea2ca5480b81a33c52aebf0a45fbfc0",
+      "src/visao_computacional/relatorio_final.py": "2eedef08e2667aaa2860cfadb7746b4924e812f780b8683ad8c7161cf2c62bd8",
+      "src/visao_computacional/t2.py": "602ac6270055f111c79ca8d1f4d9d717ddfbacc100105003f9531644dbc05238",
+      "src/visao_computacional/t2_figuras.py": "5ae9f5e034feda9e286125a45d76b3a53bf979d99307d3db9db433839b695630",
+      "src/visao_computacional/treinamento.py": "05a13c4af1797405d67ea6b59f558f3c111eec2bf7950515eae304765c7289c9",
+      "src/visao_computacional/visualizacao.py": "14af1b9b8e8174e9231a345bd4f72d58cff15f97e9eab91945d0d7fa25ab17e5"
+    }
+  }
+}

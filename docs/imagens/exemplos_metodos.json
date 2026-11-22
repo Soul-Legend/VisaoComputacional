@@ -1,0 +1,31 @@
+{
+  "source": "CNRPark+EXT / CNR-EXT; http://cnrpark.it/; ODbL-1.0",
+  "purpose": "Ilustracao dos descritores, sem avaliacao ou ajuste de modelos",
+  "manifest_sha256": "f7ac99e8b862efdf66d50f9eb641ad29540eda7213c0ce911334bc10765e58ad",
+  "examples": [
+    {
+      "id": "c0c239f4aa4f9e6e0c13",
+      "path": "PATCHES/SUNNY/2015-11-12/camera6/S_2015-11-12_07.46_C06_204.jpg",
+      "label": 0,
+      "split": "treino",
+      "camera": 6,
+      "slot": 204,
+      "date": "2015-11-12",
+      "sha256": "3d9f3b0d4083b1ae7c22beb626f53f8c436535906fbed6288d61db04957d83c1"
+    },
+    {
+      "id": "fe3c115ab4f308651b7d",
+      "path": "PATCHES/SUNNY/2015-11-12/camera6/S_2015-11-12_08.46_C06_204.jpg",
+      "label": 1,
+      "split": "treino",
+      "camera": 6,
+      "slot": 204,
+      "date": "2015-11-12",
+      "sha256": "c428f0e3b60184a075ece9fc362f7dfa448ef2909997f118caec3d4baf66f670"
+    }
+  ],
+  "image_size": [
+    128,
+    128
+  ]
+}
