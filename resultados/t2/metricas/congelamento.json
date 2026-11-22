@@ -1,0 +1,262 @@
+{
+  "signature": "{\"augmentation\": {\"brightness\": [0.8, 1.2], \"contrast\": [0.8, 1.2], \"rotation_deg\": 8, \"translate\": 0.06, \"zoom\": [0.9, 1.1]}, \"augmentation_options\": [\"sem\", \"com\"], \"batch_size\": 64, \"cnn\": {\"dense\": 128, \"dropout\": 0.5, \"filters\": [32, 64, 128], \"lr\": 0.001, \"max_epochs\": 25, \"patience\": 6}, \"extra_seeds\": [43, 44], \"image_size\": [128, 128], \"manifest_sha256\": \"f7ac99e8b862efdf66d50f9eb641ad29540eda7213c0ce911334bc10765e58ad\", \"mobilenet\": {\"lr\": 0.0001, \"max_epochs\": 15, \"patience\": 4, \"weights\": \"IMAGENET1K_V1\"}, \"seed\": 42, \"weight_decay\": 0.0001}",
+  "augmentation": "sem",
+  "primary": "cnn3_sem_s42",
+  "seeds": [
+    "cnn3_sem_s42",
+    "cnn3_sem_s43",
+    "cnn3_sem_s44"
+  ],
+  "extension": "mobilenet_sem_s42",
+  "runs": {
+    "cnn3_sem_s42": {
+      "name": "cnn3_sem_s42",
+      "architecture": "cnn3",
+      "augmentation": false,
+      "seed": 42,
+      "best_epoch": 21,
+      "epochs_run": 25,
+      "training_seconds": 951.8378435000013,
+      "parameters": 4288257,
+      "channel_mean": [
+        0.41384108558462473,
+        0.40552982724828224,
+        0.3544200932863381
+      ],
+      "channel_std": [
+        0.17277854967988165,
+        0.16832520503097292,
+        0.17692735812959515
+      ],
+      "best": {
+        "epoch": 21,
+        "train_loss": 0.020174158737063408,
+        "train_accuracy": 0.9925714285714285,
+        "train_f1_macro": 0.99257118599791,
+        "val_loss": 0.10501173883676529,
+        "val_accuracy": 0.9793333333333333,
+        "val_f1_macro": 0.9742777723997732,
+        "seconds": 37.346623499997804
+      },
+      "model_file": "cnn3_sem_s42.pt",
+      "model_sha256": "b7c3d82498291d049b668733331ce6029b676397ee8bf971b59027e1bc3a63c9"
+    },
+    "cnn3_com_s42": {
+      "name": "cnn3_com_s42",
+      "architecture": "cnn3",
+      "augmentation": true,
+      "seed": 42,
+      "best_epoch": 6,
+      "epochs_run": 12,
+      "training_seconds": 443.6155734000022,
+      "parameters": 4288257,
+      "channel_mean": [
+        0.41384108558462473,
+        0.40552982724828224,
+        0.3544200932863381
+      ],
+      "channel_std": [
+        0.17277854967988165,
+        0.16832520503097292,
+        0.17692735812959515
+      ],
+      "best": {
+        "epoch": 6,
+        "train_loss": 0.09384796023368835,
+        "train_accuracy": 0.9701428571428572,
+        "train_f1_macro": 0.9701426810456086,
+        "val_loss": 0.09722548723220825,
+        "val_accuracy": 0.9773333333333334,
+        "val_f1_macro": 0.9715991989860358,
+        "seconds": 36.3443084999999
+      },
+      "model_file": "cnn3_com_s42.pt",
+      "model_sha256": "989a7e397a2c906bc4fd4cf526bb68837cb404347015e7d5c073c42c4f34fc1b"
+    },
+    "cnn3_sem_s43": {
+      "name": "cnn3_sem_s43",
+      "architecture": "cnn3",
+      "augmentation": false,
+      "seed": 43,
+      "best_epoch": 10,
+      "epochs_run": 16,
+      "training_seconds": 586.0987281999987,
+      "parameters": 4288257,
+      "channel_mean": [
+        0.41384108558462473,
+        0.40552982724828224,
+        0.3544200932863381
+      ],
+      "channel_std": [
+        0.17277854967988165,
+        0.16832520503097292,
+        0.17692735812959515
+      ],
+      "best": {
+        "epoch": 10,
+        "train_loss": 0.03911792114377022,
+        "train_accuracy": 0.9864285714285714,
+        "train_f1_macro": 0.9864281058295081,
+        "val_loss": 0.1046658307313919,
+        "val_accuracy": 0.9786666666666667,
+        "val_f1_macro": 0.9735833522285744,
+        "seconds": 37.43512660000124
+      },
+      "model_file": "cnn3_sem_s43.pt",
+      "model_sha256": "d7c3d03de55878e321a5e785747e3024e883ecacf447b0d0e53abc1c24d2bfbe"
+    },
+    "cnn3_sem_s44": {
+      "name": "cnn3_sem_s44",
+      "architecture": "cnn3",
+      "augmentation": false,
+      "seed": 44,
+      "best_epoch": 9,
+      "epochs_run": 15,
+      "training_seconds": 555.779136600002,
+      "parameters": 4288257,
+      "channel_mean": [
+        0.41384108558462473,
+        0.40552982724828224,
+        0.3544200932863381
+      ],
+      "channel_std": [
+        0.17277854967988165,
+        0.16832520503097292,
+        0.17692735812959515
+      ],
+      "best": {
+        "epoch": 9,
+        "train_loss": 0.043225210160017014,
+        "train_accuracy": 0.9854285714285714,
+        "train_f1_macro": 0.9854281860189609,
+        "val_loss": 0.08953578025102615,
+        "val_accuracy": 0.976,
+        "val_f1_macro": 0.9704933511684632,
+        "seconds": 35.97949840000001
+      },
+      "model_file": "cnn3_sem_s44.pt",
+      "model_sha256": "c3c493fc5fe9b17d03265ca10ca932da0121ec7e4954c676ce81317b42a57acf"
+    },
+    "mobilenet_sem_s42": {
+      "name": "mobilenet_sem_s42",
+      "architecture": "mobilenet",
+      "augmentation": false,
+      "seed": 42,
+      "best_epoch": 2,
+      "epochs_run": 6,
+      "training_seconds": 346.2793249999995,
+      "parameters": 2225153,
+      "channel_mean": [
+        0.41384108558462473,
+        0.40552982724828224,
+        0.3544200932863381
+      ],
+      "channel_std": [
+        0.17277854967988165,
+        0.16832520503097292,
+        0.17692735812959515
+      ],
+      "best": {
+        "epoch": 2,
+        "train_loss": 0.02041279338300228,
+        "train_accuracy": 0.9937142857142857,
+        "train_f1_macro": 0.9937140142623302,
+        "val_loss": 0.047669678926467896,
+        "val_accuracy": 0.99,
+        "val_f1_macro": 0.9875720201432698,
+        "seconds": 58.410260200002085
+      },
+      "model_file": "mobilenet_sem_s42.pt",
+      "model_sha256": "76fdbaceaea8fe9b11fbd9a07f354423971e1abd7763d1a613c38c216543e3c2"
+    }
+  },
+  "provenance": {
+    "utc": "2026-11-21T23:00:34.031579+00:00",
+    "commit": "94439a2a2d1c277ca0aa32608ac263d54471ec2e",
+    "tracked_dirty": true,
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+    "versions": {
+      "numpy": "2.5.4",
+      "pandas": "2.3.3",
+      "opencv-python-headless": "4.14.0.94",
+      "scikit-image": "0.26.0",
+      "scikit-learn": "1.9.1",
+      "matplotlib": "3.11.2",
+      "PyYAML": "6.0.3",
+      "torch": "2.15.0+cpu",
+      "torchvision": "0.29.2+cpu"
+    },
+    "config": {
+      "seed": 42,
+      "data_root": "data/raw/CNR-EXT",
+      "manifest": "data/manifests/t1.csv",
+      "processed_dir": "data/processed/t2",
+      "models_dir": "modelos/t2",
+      "results_dir": "resultados/t2",
+      "report_dir": "relatorios/final",
+      "t1_config": "D:\\Sandbox\\VisaoComp\\configs\\t1.yaml",
+      "image_size": [
+        128,
+        128
+      ],
+      "threads": 8,
+      "batch_size": 64,
+      "weight_decay": 0.0001,
+      "cnn": {
+        "filters": [
+          32,
+          64,
+          128
+        ],
+        "dense": 128,
+        "dropout": 0.5,
+        "lr": 0.001,
+        "max_epochs": 25,
+        "patience": 6
+      },
+      "mobilenet": {
+        "weights": "IMAGENET1K_V1",
+        "lr": 0.0001,
+        "max_epochs": 15,
+        "patience": 4
+      },
+      "augmentation": {
+        "rotation_deg": 8,
+        "zoom": [
+          0.9,
+          1.1
+        ],
+        "translate": 0.06,
+        "brightness": [
+          0.8,
+          1.2
+        ],
+        "contrast": [
+          0.8,
+          1.2
+        ]
+      },
+      "augmentation_options": [
+        "sem",
+        "com"
+      ],
+      "extra_seeds": [
+        43,
+        44
+      ],
+      "bootstrap_resamples": 2000,
+      "loco": {
+        "svm_descriptors": [
+          "lbp",
+          "combinado"
+        ],
+        "svm_c": 0.01
+      },
+      "config_path": "configs/t2.yaml"
+    },
+    "manifest_sha256": "f7ac99e8b862efdf66d50f9eb641ad29540eda7213c0ce911334bc10765e58ad",
+    "torch_threads": 8
+  }
+}

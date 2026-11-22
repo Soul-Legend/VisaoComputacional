@@ -107,3 +107,44 @@ A CLI renderiza o Markdown gerado com ReportLab. Não requer LaTeX, Word ou serv
 Após qualquer alteração, renderize as páginas com Poppler (`pdftoppm`) ou outro leitor e confira
 legibilidade, tabelas, figuras, paginação e correspondência com o Markdown. O alvo de extensão
 do relatório é uma escolha do projeto, não uma norma de formatação do professor.
+
+## T2: redes neurais e relatório combinado
+
+O T2 usa o mesmo manifesto, os mesmos dados brutos e as predições congeladas do T1.
+Instale o PyTorch para CPU (o experimento publicado usou torch 2.15.0 e torchvision 0.29.2):
+
+```powershell
+.venv\Scripts\python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+.venv\Scripts\python -m pip install --no-deps -e .
+```
+
+`requirements-lock-t2.txt` registra o ambiente completo do T2. Os pesos ImageNet da MobileNetV2
+são baixados pelo torchvision (`mobilenet_v2-b0353104.pth`) na primeira execução.
+As etapas usam `configs/t2.yaml` por padrão, na ordem abaixo:
+
+```powershell
+.venv\Scripts\python -m visao_computacional.cli imagens
+.venv\Scripts\python -m visao_computacional.cli redes-treinar
+.venv\Scripts\python -m visao_computacional.cli redes-avaliar
+.venv\Scripts\python -m visao_computacional.cli generalizacao
+.venv\Scripts\python -m visao_computacional.cli comparar
+.venv\Scripts\python -m visao_computacional.cli redes-figuras
+.venv\Scripts\python -m visao_computacional.cli relatorio-final
+```
+
+- `imagens` lê os 10.000 recortes uma vez (128 × 128, RGB) e mede o tempo de preparo.
+- `redes-treinar` escolhe pela validação entre CNN-3 sem e com aumento, treina as sementes
+  extras e a MobileNetV2 e congela tudo. Leva cerca de 1h30 em CPU de 8 núcleos.
+  Rodadas já salvas são reaproveitadas após verificação do hash, o que permite retomar.
+- `redes-avaliar` abre o teste uma única vez e recusa repetir a operação.
+- `generalizacao` treina, para cada uma das 9 câmeras, SVMs e CNN-3 sem aquela câmera
+  (cerca de 1h em CPU). Dobras concluídas são reaproveitadas.
+- `comparar` calcula intervalos por bootstrap agrupado por captura e testes pareados.
+- `redes-figuras` gera as figuras e as montagens para a anotação cega dos erros em
+  `resultados/t2/anotacao/`. As categorias atribuídas ficam em `relatorios/final/anotacao_erros.csv`.
+- `relatorio-final` preenche `relatorios/final/modelo.md` e gera Markdown e PDF.
+
+Com a mesma semente, as mesmas 8 threads e a mesma máquina, os pesos se repetem; em outro
+processador ou com outra versão do PyTorch, pequenas diferenças numéricas são esperadas.
+Para um estudo independente, copie `configs/t2.yaml` e troque `processed_dir`, `models_dir`,
+`results_dir` e `report_dir`.

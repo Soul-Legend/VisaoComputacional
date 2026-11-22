@@ -1,0 +1,12 @@
+{
+  "resamples": 2000,
+  "seed": 42,
+  "clusters": 695,
+  "cluster": "capture (camera + data + horario)",
+  "inputs_sha256": {
+    "t2_avaliacao": "0536e3799847430120f9861881640f438d19667428af5ba47e04e59fa34e1027"
+  },
+  "generalizacao": {
+    "predictions_sha256": "093d35060ec6f8519bb5a657301d6b23e29c197b1de1a49bb6b6aabb0587a068"
+  }
+}
