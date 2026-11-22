@@ -1,32 +1,34 @@
-# Classificação de ocupação de vagas: métodos clássicos e redes neurais
+# Classificação de ocupação de vagas: de descritores clássicos a redes convolucionais
 
-Relatório final combinado (T1 + T2) | INE5443 - Reconhecimento de Padrões | 2026-2
+Relatório final | INE5443 - Reconhecimento de Padrões | 2026-2
 
 Repositório: Soul-Legend/VisaoComputacional
 
 ### Resumo
 
-Este relatório reúne os dois trabalhos da disciplina sobre um mesmo problema: decidir se o recorte
-de uma vaga de estacionamento mostra uma vaga livre ou ocupada. No T1, a imagem foi descrita por
+Este trabalho estuda como decidir, a partir do recorte de uma vaga de estacionamento, se ela está
+livre ou ocupada. O estudo começa por uma linha de base clássica, em que a imagem é descrita por
 características definidas manualmente (cor, textura e gradientes) e classificada por uma SVM linear.
-No T2, uma rede neural convolucional aprendeu a própria representação a partir dos pixels. As duas
-abordagens usaram as mesmas {{n_total}} imagens do CNR-EXT, as mesmas partições e o mesmo teste de
-{{n_teste}} imagens, que só foi consultado depois que cada modelo estava congelado.
+Em seguida, verifica se uma rede neural convolucional, que aprende a própria representação a partir
+dos pixels, supera os limites dessa linha de base. Todos os modelos usaram as mesmas {{n_total}}
+imagens do CNR-EXT, as mesmas partições e o mesmo teste de {{n_teste}} imagens, consultado só depois
+que cada modelo estava congelado.
 
-No teste, a CNN-3, uma rede pequena treinada do zero, alcançou F1 macro de {{f1_cnn}}
-(IC 95% {{ic_cnn}}), contra {{f1_lbp}} do LBP com SVM, escolhido pela validação do T1, e
-{{f1_combinado}} da combinação HSV + LBP + HOG, o melhor resultado clássico. A vantagem apareceu
-nos três climas e reduziu de {{lbp_erros}} para {{cnn_erros}} os erros em relação ao LBP, principalmente em sombras e em
-carros bem visíveis. Uma MobileNetV2 pré-treinada no ImageNet chegou a {{f1_mobilenet}}.
-Treinada sem as imagens de uma câmera e testada nela, a CNN-3 caiu para {{gen_nova_cnn3}}, ainda acima dos dois métodos clássicos no mesmo cenário. Em contrapartida, a CNN-3 levou {{treino_cnn_min}} minutos para treinar
-em CPU, contra frações de segundo da SVM, e seus erros restantes concentram-se em vagas encobertas
-por vegetação e em imagens de chuva.
+No teste, a melhor representação clássica, a combinação HSV + LBP + HOG, alcançou F1 macro de
+{{f1_combinado}}, e o LBP com SVM, escolhido pela validação, {{f1_lbp}}. A CNN-3, uma rede pequena
+treinada do zero, chegou a {{f1_cnn}} (IC 95% {{ic_cnn}}). A vantagem apareceu nos três climas e
+reduziu de {{lbp_erros}} para {{cnn_erros}} os erros em relação ao LBP, principalmente em sombras e
+em carros bem visíveis. Uma MobileNetV2 pré-treinada no ImageNet chegou a {{f1_mobilenet}}.
+Treinada sem as imagens de uma câmera e testada nela, a CNN-3 caiu para {{gen_nova_cnn3}}, ainda
+acima dos dois métodos clássicos no mesmo cenário. Em contrapartida, levou {{treino_cnn_min}}
+minutos para treinar em CPU, contra frações de segundo da SVM, e seus erros restantes concentram-se
+em vagas encobertas por vegetação e em imagens de chuva.
 
 <!-- COLS 1.1,3.4 -->
 | Sigla ou termo | Significado neste relatório |
 | --- | --- |
 | CNN | Rede neural convolucional (*convolutional neural network*): aprende filtros que extraem características da imagem. |
-| CNN-3 | A rede treinada do zero no T2, com três blocos convolucionais. |
+| CNN-3 | A rede convolucional de três blocos treinada do zero neste trabalho (seção 4). |
 | SVM | Máquina de vetores de suporte (*support vector machine*): classificador que traça uma fronteira entre as classes. |
 | HSV, LBP, HOG | Descritores clássicos de cor, textura e gradientes, explicados na seção 3. |
 | F1 macro | Média do F1 das classes livre e ocupada, com o mesmo peso para as duas (seção 2.4). |
@@ -53,32 +55,39 @@ não rastreia veículos, não lê placas e não processa vídeo. Essa delimitaç
 estudo na pergunta que a disciplina propõe: **como uma abordagem clássica de visão computacional se
 compara a uma rede neural no mesmo problema, considerando desempenho, robustez e custo?**
 
-As duas abordagens diferem no que é aprendido a partir dos dados. No T1, a representação da imagem
-é fixa e escolhida por nós: histogramas de cor, códigos de textura ou orientações de gradientes.
-Só a fronteira de decisão da SVM é aprendida. No T2, a CNN aprende ao mesmo tempo os filtros que
-descrevem a imagem e a decisão final. Esperávamos que essa flexibilidade desse vantagem à CNN, mas
-também que ela custasse mais tempo de treino e fosse menos transparente.
+O trabalho avançou em duas etapas, e a segunda parte do que a primeira revelou. Começamos pela
+abordagem clássica, em que a representação da imagem é fixa e escolhida por nós: histogramas de
+cor, códigos de textura ou orientações de gradientes. Só a fronteira de decisão da SVM é aprendida.
+Essa linha de base acertou a maioria das vagas, mas errava de forma sistemática em algumas
+situações, como dias de sol com sombras fortes, o que aponta para um limite da própria
+representação. A segunda etapa testa se uma rede neural convolucional (CNN), que aprende ao mesmo
+tempo os filtros que descrevem a imagem e a decisão final, supera esse limite. Esperávamos que essa
+flexibilidade desse vantagem à CNN, mas também que ela custasse mais tempo de treino e fosse menos
+transparente.
 
-A comparação só é justa se o restante do experimento for idêntico. Por isso, o T2 reutilizou o
-manifesto do T1 (a lista congelada de imagens), as mesmas partições de treino, validação e teste,
-o mesmo redimensionamento e as mesmas métricas. Os modelos clássicos não foram retreinados: suas
-predições no teste foram registradas no T1 e apenas relidas aqui.
+Para que a comparação seja justa, a segunda etapa manteve tudo o que não faz parte do método: a
+mesma lista congelada de imagens (o manifesto), as mesmas partições de treino, validação e teste, o
+mesmo redimensionamento e as mesmas métricas. Os modelos clássicos não foram retreinados; suas
+predições no teste foram registradas uma única vez e reutilizadas na comparação.
 
 Além da comparação principal, investigamos duas perguntas de robustez. A primeira é se o desempenho
 muda entre dias de sol, nublados e chuvosos. A segunda é o que acontece quando o modelo precisa
 classificar imagens de uma câmera que não apareceu no treino. Por fim, examinamos os erros de cada
 abordagem para entender em que situações cada uma falha.
 
-O texto segue esta ordem: a seção 2 apresenta dados, protocolo e métricas comuns; as seções 3 e 4
-descrevem os métodos clássico e neural; as seções 5 a 7 apresentam os resultados; e as seções 8 e 9
-discutem o que eles permitem concluir. As informações para reproduzir o estudo ficam ao final.
+O texto segue a mesma ordem. A seção 2 apresenta dados, protocolo e métricas; a seção 3 descreve a
+linha de base clássica e os limites que motivaram a segunda etapa; a seção 4 descreve as redes
+convolucionais. As seções 5 a 7 comparam as abordagens no teste, em condições adversas e pelos
+erros que cometem, e as seções 8 e 9 discutem o que os resultados permitem concluir. As informações
+para reproduzir o estudo ficam ao final.
 
 <!-- PAGEBREAK -->
 
-## 2. Dados e protocolo comum aos dois trabalhos
+## 2. Dados e protocolo experimental
 
-Esta seção descreve o que é compartilhado pelas duas abordagens: a origem das imagens, a divisão
-em partições, a forma de escolher modelos sem consultar o teste e as métricas de avaliação.
+Esta seção descreve a origem das imagens, a divisão em partições, a forma de escolher modelos sem
+consultar o teste e as métricas de avaliação. Tudo o que ela apresenta vale igualmente para os
+métodos clássicos e para as redes.
 
 ### 2.1. Origem e limpeza das imagens
 
@@ -95,7 +104,7 @@ preservando aproximadamente as proporções de classe, câmera e clima de cada p
 
 {{tabela_dados}}
 
-Tabela 1. Composição do subconjunto usado nos dois trabalhos.
+Tabela 1. Composição do subconjunto usado no estudo.
 
 A Figura 1 mostra que o treino é quase balanceado, enquanto validação e teste preservam as
 proporções das listas oficiais. A validação tem {{ocupadas_validacao}} de vagas ocupadas e nenhuma
@@ -113,7 +122,7 @@ validação vem da partição oficial do dataset.
 Os exemplos da Figura 2 mostram por que a tarefa não se resume a encontrar uma mancha com formato
 de carro. A perspectiva muda entre câmeras, árvores encobrem parte das vagas e sombras alteram a
 aparência do asfalto. Todas as imagens foram redimensionadas para 128 × 128 pixels com o mesmo
-procedimento nos dois trabalhos.
+procedimento para todos os modelos.
 
 ![Exemplos do treinamento]({{figuras}}/exemplos_treino.png)
 
@@ -130,12 +139,16 @@ Cada partição tem um papel. O treino ajusta os parâmetros do modelo. A valida
 configurações candidatas, como o valor de C da SVM ou o uso de aumento de dados na CNN. O teste
 estima o desempenho da configuração escolhida em imagens que não influenciaram nenhuma decisão.
 
-Em ambos os trabalhos, a regra de escolha foi o maior F1 macro na validação, arredondado a quatro
+Para todos os modelos, a regra de escolha foi o maior F1 macro na validação, arredondado a quatro
 casas, com empates resolvidos em favor da opção mais simples. Depois da escolha, os modelos foram
 congelados e identificados por *hashes* (impressões digitais dos arquivos que revelam qualquer
-alteração). Só então cada trabalho executou **um único lote de avaliação no teste**. O código
-recusa repetir esse lote, para impedir ajustes depois de ver o resultado. O protocolo do T2 foi
-registrado por escrito antes do primeiro treinamento de rede (docs/planejamento_t2.md).
+alteração). Só então foram avaliados no teste, em **um único lote de avaliação por etapa**. O
+código recusa repetir esse lote, para impedir ajustes depois de ver o resultado.
+
+A ordem das etapas exige um cuidado adicional. Quando as redes foram projetadas, o resultado
+clássico no teste já era conhecido. Para que esse conhecimento não influenciasse as redes, o
+protocolo delas, com arquiteturas, candidatos e regra de escolha, foi escrito antes do primeiro
+treino (docs/planejamento_t2.md), e nenhuma decisão sobre as redes usou o teste.
 
 ### 2.4. Como medir e comparar o desempenho
 
@@ -162,10 +175,10 @@ como independentes; o intervalo agrupado é a evidência mais conservadora das d
 
 <!-- PAGEBREAK -->
 
-## 3. Abordagem clássica (T1): descritores e SVM
+## 3. Linha de base clássica: descritores e SVM
 
-No T1, cada recorte é convertido em um vetor numérico por um descritor escolhido manualmente, e uma
-SVM linear aprende a separar os vetores de vagas livres e ocupadas. As Figuras 3 a 5 usam o mesmo
+Na primeira etapa, cada recorte é convertido em um vetor numérico por um descritor escolhido
+manualmente, e uma SVM linear aprende a separar os vetores de vagas livres e ocupadas. As Figuras 3 a 5 usam o mesmo
 par de imagens de treino, a vaga 204 da câmera 6, livre às 07h46 e ocupada às 08h46 de 12/11/2015.
 O mesmo par reaparece na seção 4 para mostrar o que a CNN extrai dele.
 
@@ -205,7 +218,7 @@ dos contornos (Figura 5).
 
 Figura 5. Recortes originais, intensidade dos gradientes e orientações por célula.
 
-### 3.4. Classificação e resultado do T1
+### 3.4. Classificação e escolha pela validação
 
 O mesmo fluxo foi usado para cada descritor e para a concatenação HSV + LBP + HOG, com 8.158
 características (Figura 6). Cada componente é padronizado com média e desvio do treino
@@ -217,26 +230,34 @@ O parâmetro C controla o quanto a SVM penaliza erros de treino e foi escolhido 
 
 Figura 6. Fluxo clássico: o mesmo pipeline é aplicado a cada descritor e à combinação.
 
-A Tabela 2 resume o T1. Pela regra de validação, o modelo escolhido foi **{{vencedor}}, com
-C={{c}}**, com F1 macro de {{val_f1}} na validação, praticamente empatado com a combinação
-({{val_f1_combinado}}). No teste, porém, a combinação dos três descritores foi a melhor
-representação clássica. A escolha feita na validação foi mantida no T1. Neste relatório, as duas
-servem de referência: LBP por ter sido a escolha do protocolo e HSV + LBP + HOG por ser o melhor
-desempenho clássico observado, ressalvando que essa segunda referência foi destacada depois do teste.
+A Tabela 2 mostra o melhor C de cada representação na validação. Pela regra da seção 2.3, o modelo
+escolhido foi **{{vencedor}}, com C={{c}}**, com F1 macro de {{val_f1}}, praticamente empatado com
+a combinação dos três descritores ({{val_f1_combinado}}). Nenhuma SVM levou mais de dez segundos
+para ajustar. O LBP e a combinação servem de referências clássicas na comparação da seção 5.
 
-{{tabela_t1_resumo}}
+<!-- COLS 2,1.2,1.3,1.4,1.2 -->
+{{tabela_selecao_classica}}
 
-Tabela 2. Resultados do T1 com o melhor C de cada representação. A validação escolheu LBP; o
-teste foi aberto uma única vez para todos os modelos.
+Tabela 2. Escolha da linha de base clássica na validação, com o melhor C de cada representação.
+
+### 3.5. Limites de uma representação fixa
+
+Os três descritores mostram escolhas que a abordagem clássica obriga a fazer antes de ver os dados:
+o que medir e quanto da posição preservar. HSV e LBP resumem o recorte inteiro em um histograma e
+descartam onde cada cor ou textura aparece; uma sombra forte ou um canteiro de grama pode, assim,
+produzir um histograma parecido com o da lataria de um carro. O HOG preserva a posição dos
+contornos, mas com células e orientações fixas, e a SVM linear só combina essas características de
+forma aditiva. A segunda etapa remove essas escolhas: em vez de projetar a representação, deixamos
+que ela seja aprendida a partir dos próprios exemplos.
 
 <!-- PAGEBREAK -->
 
-## 4. Abordagem neural (T2): redes convolucionais
+## 4. Redes convolucionais: representação aprendida
 
-No T2, a representação deixa de ser escolhida por nós. Uma rede neural convolucional recebe os
+Nesta etapa, a representação deixa de ser escolhida por nós. Uma rede neural convolucional recebe os
 pixels e ajusta, durante o treino, tanto os filtros que extraem características quanto a regra que
 decide a classe [7]. Esta seção explica os componentes da rede, como ela foi treinada e como a
-configuração final foi escolhida.
+configuração final foi escolhida, com a mesma regra de validação usada para a SVM.
 
 ### 4.1. Arquitetura da CNN-3
 
@@ -282,8 +303,8 @@ Figura 8. Uma imagem de treino e cinco variações sorteadas pelo aumento de dad
 
 ### 4.3. Escolha da configuração pela validação
 
-A única escolha da CNN-3 feita pela validação foi usar ou não o aumento de dados. As duas
-configurações foram treinadas com a mesma semente. A Tabela 3 mostra que a versão
+A única escolha da CNN-3 feita pela validação foi usar ou não o aumento de dados, papel equivalente
+ao do parâmetro C na SVM. As duas configurações foram treinadas com a mesma semente. A Tabela 3 mostra que a versão
 **{{aumento_escolhido}}** obteve o maior F1 macro de validação e foi a escolhida.
 
 {{tabela_selecao}}
@@ -340,24 +361,27 @@ livre, quase não há ativação, exceto em marcações e bordas. O Grad-CAM da 
 faixas e o meio-fio, o que sugere que a rede usa a presença dessas marcações visíveis como evidência
 de vaga vazia.
 
-A comparação com as Figuras 3 a 5 mostra a diferença essencial entre as abordagens. Os histogramas
-de HSV e LBP descartam a posição dos padrões; o HOG a preserva, mas com uma regra fixa. A CNN-3
-preserva a posição e aprende quais combinações de padrões importam para a decisão. Estes mapas
-ilustram dois exemplos e não provam que a rede use sempre as mesmas pistas.
+A comparação com as Figuras 3 a 5 retoma os limites apontados na seção 3.5. Em vez de um
+histograma que descarta a posição ou de células com regra fixa, a CNN-3 preserva onde cada padrão
+aparece e aprende quais combinações importam para a decisão. Estes mapas ilustram dois exemplos e
+não provam que a rede use sempre as mesmas pistas.
 
 <!-- PAGEBREAK -->
 
-## 5. Resultados no teste: abordagem clássica e redes neurais
+## 5. Comparação no teste
 
-Todos os números desta seção vêm das mesmas {{n_teste}} imagens de teste. Os modelos clássicos foram
-avaliados no T1; as redes, em um único lote do T2, depois do congelamento descrito na seção 4.3.
+Todos os números desta seção vêm das mesmas {{n_teste}} imagens de teste, consultadas só depois que
+cada modelo estava congelado (seção 2.3).
 
 ### 5.1. Desempenho geral
 
-A Tabela 4 reúne todos os modelos. A CNN-3 obteve F1 macro de {{f1_cnn}}, com IC 95% {{ic_cnn}}.
-O intervalo não se sobrepõe ao de nenhum método clássico: o melhor deles, HSV + LBP + HOG, ficou
-em {{f1_combinado}} {{ic_combinado}}, e o LBP escolhido no T1, em {{f1_lbp}} {{ic_lbp}}.
-A MobileNetV2 alcançou {{f1_mobilenet}} {{ic_mobilenet}}.
+A Tabela 4 reúne todos os modelos, com duas referências clássicas. O LBP é a escolha da validação,
+prevista pelo protocolo. A combinação HSV + LBP + HOG teve o melhor resultado clássico no teste e,
+por ter sido destacada depois de ver o teste, é uma referência favorável à abordagem clássica.
+
+A CNN-3 obteve F1 macro de {{f1_cnn}}, com IC 95% {{ic_cnn}}. O intervalo não se sobrepõe ao de
+nenhum método clássico: a combinação ficou em {{f1_combinado}} {{ic_combinado}}, e o LBP, em
+{{f1_lbp}} {{ic_lbp}}. A MobileNetV2 alcançou {{f1_mobilenet}} {{ic_mobilenet}}.
 
 <!-- COLS 2.3,1.5,1,1,1.5 -->
 {{tabela_comparacao}}
@@ -365,17 +389,19 @@ A MobileNetV2 alcançou {{f1_mobilenet}} {{ic_mobilenet}}.
 Tabela 4. Desempenho no teste. O IC 95% vem do *bootstrap* agrupado por captura. As linhas de
 semente 43 e 44 repetem a CNN-3 com outra inicialização; a linha principal usa a semente 42.
 
-A Figura 11 mostra a mesma informação em escala. Os métodos clássicos ocupam a faixa de 0,80 a
-0,93; as redes, a faixa acima de 0,98. A variação entre as três sementes da CNN-3 é pequena
-diante dessa separação: média de {{f1_sementes_media}}, desvio-padrão de {{f1_sementes_dp}} e
-valores de {{f1_sementes_min}} a {{f1_sementes_max}}. A semente principal, fixada antes do teste,
-ficou com o menor valor das três. A configuração com aumento de dados, não escolhida na validação,
-obteve {{f1_alternativa}} no mesmo teste, o que confirma que essa escolha teve pouco efeito.
+Na Figura 11, os métodos clássicos ocupam a faixa de 0,80 a 0,93, e as redes, a faixa acima de
+0,98. A variação entre as três sementes da CNN-3 é pequena diante dessa separação: média de
+{{f1_sementes_media}}, desvio-padrão de {{f1_sementes_dp}}, de {{f1_sementes_min}} a
+{{f1_sementes_max}}; a semente principal, fixada antes do teste, ficou com o menor valor. A
+configuração com aumento de dados, não escolhida, obteve {{f1_alternativa}}, o que confirma que
+essa escolha teve pouco efeito.
 
 ![Comparação com intervalos de confiança]({{figuras_t2}}/comparacao_ic.png)
 
 Figura 11. F1 macro no teste com IC 95%. A separação entre métodos clássicos e redes é maior
 que a incerteza de cada estimativa.
+
+<!-- PAGEBREAK -->
 
 ### 5.2. As diferenças são consistentes?
 
@@ -440,11 +466,11 @@ já carregadas.
 
 A SVM do LBP ajustou-se em {{treino_lbp_s}} s e a da combinação, em {{treino_combinado_s}} s. A
 CNN-3 precisou de {{treino_cnn_min}} minutos e a MobileNetV2, de {{treino_mobilenet_min}} minutos.
-Considerando todas as configurações testadas, a busca do T1 somou cerca de {{busca_t1_s}} s de
-ajuste, e a do T2, cerca de {{busca_t2_min}} minutos. Na inferência, a situação muda: a CNN-3 gasta
+Considerando todas as configurações testadas, a busca da linha de base clássica somou cerca de
+{{busca_t1_s}} s de ajuste, e a das redes, cerca de {{busca_t2_min}} minutos. Na inferência, a situação muda: a CNN-3 gasta
 {{total_cnn_ms}} ms por imagem, próximo do LBP ({{total_lbp_ms}} ms) e abaixo da combinação
 clássica ({{total_comb_ms}} ms), cujo HOG domina o tempo de preparo. Esses tempos vêm de uma única
-execução, sem estimativa de variabilidade. A leitura das imagens pelo T2 provavelmente se beneficiou
+execução, sem estimativa de variabilidade. A leitura das imagens pelas redes provavelmente se beneficiou
 de arquivos já em cache do sistema operacional, o que favorece a coluna de preparo das redes.
 
 <!-- PAGEBREAK -->
@@ -458,8 +484,8 @@ mantém quando as condições mudam: primeiro entre climas, depois diante de uma
 
 A Tabela 8 e a Figura 13 dividem o teste por clima. A CNN-3 superou os métodos clássicos em todas
 as condições. A maior diferença ocorreu no sol: F1 macro de {{clima_cnn3_sunny}} contra
-{{clima_lbp_sunny}} do LBP e {{clima_combinado_sunny}} da combinação. No T1, o sol era a condição
-mais difícil para o LBP, possivelmente por causa das sombras fortes. Para a CNN-3, a condição mais
+{{clima_lbp_sunny}} do LBP e {{clima_combinado_sunny}} da combinação. O sol era justamente a
+condição mais difícil para o LBP, possivelmente por causa das sombras fortes. Para a CNN-3, a condição mais
 difícil foi a chuva ({{clima_cnn3_rainy}}, IC {{clima_ic_cnn3_rainy}}), embora ainda bem acima dos
 clássicos nessa mesma condição.
 
@@ -565,17 +591,17 @@ nas duas colunas.
 
 A CNN-3 eliminou quase todos os erros associados a sombras (de {{anot_sombra_lbp}} para {{anot_sombra_cnn}}) e quase todos os erros
 sem causa aparente (de {{anot_sem_causa_lbp}} para {{anot_sem_causa_cnn}}). Este segundo grupo inclui muitas vagas com um carro inteiro e
-bem visível que o LBP classificou como livres, como mostram os exemplos de erro do T1 na Figura 16.
+bem visível que o LBP classificou como livres, como mostram os exemplos de erros do LBP na Figura 16.
 Esses casos indicam que o histograma global de textura perdia informação que a CNN-3 consegue usar.
 
-![Erros do LBP no T1]({{figuras}}/erros_vencedor.png)
+![Erros do LBP]({{figuras}}/erros_vencedor.png)
 
-Figura 16. Erros do LBP + SVM (T1), até seis por direção, amostrados com semente 42.
+Figura 16. Erros do LBP + SVM no teste, até seis por direção, amostrados com semente 42.
 
 Os erros que restam na CNN-3 têm outro perfil (Figura 17). A categoria mais frequente é a oclusão
 por vegetação ({{anot_oclusao_cnn}} dos {{cnn_erros}} erros), seguida por chuva e sombras. Nas câmeras 3 e 7, galhos e arbustos
 cobrem boa parte do veículo ou criam texturas que se confundem com um carro. Uma das imagens
-ocupadas da câmera 9 é praticamente preta e também foi errada no T1; nela, a ocupação não pode
+ocupadas da câmera 9 é praticamente preta e também foi errada pelo LBP; nela, a ocupação não pode
 ser confirmada visualmente. Na câmera 1, um carro vizinho ocupa grande parte de um recorte rotulado
 como livre. A CNN-3 o classificou como ocupado com probabilidade 1,00, situação em que a fronteira
 entre erro do modelo e limitação do recorte é discutível.
@@ -615,12 +641,11 @@ representações clássicas em todas as métricas, nas duas classes e nos três 
 muito maiores que a incerteza estimada. A diferença de F1 macro em relação à melhor combinação
 clássica foi de {{diff_cnn3_combinado}}, com intervalo {{diff_ic_cnn3_combinado}}.
 
-A análise de erros sugere por que isso acontece. Os histogramas de cor e de textura resumem a
-imagem inteira em poucos números e descartam onde cada padrão aparece. Uma sombra forte ou um
-canteiro de grama pode produzir o mesmo histograma que a lataria de um carro. O HOG preserva a
-posição dos contornos, mas com uma regra fixa e uma fronteira linear. A CNN-3 aprende, a partir dos
-exemplos, combinações de padrões em posições específicas, como um farol acima de uma placa. Os mapas
-internos e o Grad-CAM são compatíveis com essa explicação, embora não a provem.
+A análise de erros confirma o limite antecipado na seção 3.5. Os erros que a CNN-3 eliminou eram,
+sobretudo, sombras e carros bem visíveis, situações em que um histograma global confunde o que está
+na vaga. A CNN-3 aprende, a partir dos exemplos, combinações de padrões em posições específicas,
+como um farol acima de uma placa. Os mapas internos e o Grad-CAM são compatíveis com essa
+explicação, embora não a provem.
 
 Isso não torna os métodos clássicos inúteis. O LBP descreve uma vaga com dez números, treina em
 milissegundos e é inteiramente interpretável. Em um cenário com pouquíssimos dados rotulados, sem
@@ -637,9 +662,8 @@ teste.
 
 O experimento de câmera nova responde a uma objeção natural: a vantagem da CNN-3 poderia vir de
 memorizar a aparência de cada vaga vista no treino. Sem a câmera do teste, a rede perdeu
-{{gen_queda_cnn3}} de F1 macro e manteve uma vantagem de {{gen_par_lbp}} sobre o LBP, pouco menor que a
-obtida
-no teste principal (Tabela 5). A memorização, portanto, explica no máximo uma parte pequena do resultado. O
+{{gen_queda_cnn3}} de F1 macro e manteve uma vantagem de {{gen_par_lbp}} sobre o LBP, pouco menor
+que a obtida no teste principal (Tabela 5). A memorização, portanto, explica no máximo uma parte pequena do resultado. O
 experimento não substitui um teste em outro estacionamento, porque as câmeras retiradas ainda
 compartilham vagas, iluminação e clima com as que ficaram no treino.
 
@@ -655,11 +679,11 @@ em uma única máquina. Por fim, a anotação dos erros é interpretativa e de u
 
 ## 9. Conclusão
 
-Este trabalho comparou, sob um mesmo protocolo, uma abordagem clássica e uma abordagem neural para
-classificar vagas de estacionamento como livres ou ocupadas. No T1, a melhor representação clássica,
-HSV + LBP + HOG com SVM linear, chegou a {{f1_combinado}} de F1 macro no teste, e o LBP escolhido
-pela validação, a {{f1_lbp}}. No T2, uma CNN de três blocos treinada do zero chegou a {{f1_cnn}} e
-uma MobileNetV2 pré-treinada, a {{f1_mobilenet}}, nas mesmas imagens.
+Este trabalho partiu de uma linha de base clássica e, sob o mesmo protocolo, verificou se uma rede
+neural convolucional supera seus limites na classificação de vagas como livres ou ocupadas. A
+linha de base chegou a {{f1_combinado}} de F1 macro no teste com HSV + LBP + HOG e SVM linear, e a
+{{f1_lbp}} com o LBP escolhido pela validação. Nas mesmas imagens, uma CNN de três blocos treinada
+do zero chegou a {{f1_cnn}}, e uma MobileNetV2 pré-treinada, a {{f1_mobilenet}}.
 
 A vantagem das redes foi consistente entre classes, climas e sementes, e a análise pareada mostrou
 que ela não depende de poucos casos. Os erros que a CNN-3 eliminou estavam ligados principalmente a
@@ -678,21 +702,21 @@ combinação das duas abordagens corrige os erros que cada uma comete sozinha.
 
 ### Reprodução do estudo
 
-O README e docs/reproducao.md apresentam os comandos do T1 e do T2. O ambiente foi
-{{ambiente}}, com processador AMD Ryzen 7 9800X3D (identificado pelo sistema como {{processador}})
-e PyTorch {{versao_torch}} [14] com {{threads}} threads. O T1 foi registrado nos commits
-{{commit_treino}} (treino) e {{commit_teste}} (teste). O código do T2 foi executado a partir do
-commit {{commit_t2_treino}} com alterações ainda não registradas; para compensar, os *hashes*
-SHA-256 de cada arquivo de código usado no treino e no teste estão em
+O README e docs/reproducao.md apresentam os comandos de cada etapa. O ambiente foi {{ambiente}},
+com processador AMD Ryzen 7 9800X3D (identificado pelo sistema como {{processador}}) e PyTorch
+{{versao_torch}} [14] com {{threads}} threads. A linha de base clássica foi registrada nos commits
+{{commit_treino}} (treino) e {{commit_teste}} (teste). As redes foram treinadas e testadas a partir
+do commit {{commit_t2_treino}}, com alterações registradas depois no commit 3c72571; para
+compensar, os *hashes* SHA-256 de cada arquivo de código usado no treino e no teste estão em
 resultados/t2/metricas/codigo_treino.json e avaliacao.json.
 
 {{tabela_versoes}}
 
-Tabela 11. Versões das bibliotecas do T1. O T2 acrescenta torch {{versao_torch}} e torchvision
-{{versao_torchvision}}; o ambiente completo está em requirements-lock-t2.txt.
+Tabela 11. Versões das principais bibliotecas, as mesmas nas duas etapas. O ambiente completo está
+em requirements-lock-t2.txt.
 
-A identidade SHA-256 do manifesto, comum aos dois trabalhos, permite conferir se uma reprodução
-usa exatamente as mesmas imagens:
+A identidade SHA-256 do manifesto, comum a todos os experimentos, permite conferir se uma
+reprodução usa exatamente as mesmas imagens:
 
 `{{manifest_hash}}`
 
@@ -749,10 +773,11 @@ Advances in Neural Information Processing Systems 32 (NeurIPS), 2019.
 
 ### Onde encontrar as evidências
 
-As evidências do T1 estão em resultados/t1/ e as do T2, em resultados/t2/. Em resultados/t2/metricas/,
+As evidências da linha de base clássica estão em resultados/t1/, e as das redes e da comparação,
+em resultados/t2/. Em resultados/t2/metricas/,
 selecao.csv e curvas.csv registram a escolha pela validação; congelamento.json, os pesos congelados;
 teste.csv e predicoes/, o lote único de teste; comparacao.csv, pares.csv e clima_comparado.csv, os
 intervalos e testes pareados; generalizacao*.csv, o experimento de câmera nova; e
-anotacao_erros_cruzada.csv, a anotação cega cruzada com os erros. As figuras do T2 estão em
+anotacao_erros_cruzada.csv, a anotação cega cruzada com os erros. As figuras das redes estão em
 resultados/t2/figuras/. Os dados brutos e os pesos treinados ficam fora do Git; a documentação
 explica como obtê-los ou recriá-los.

@@ -1,4 +1,4 @@
-"""Relatorio unico (T1 + T2) gerado das evidencias congeladas dos dois trabalhos.
+"""Relatorio final unico gerado das evidencias congeladas das duas etapas (classica e redes).
 
 Todos os numeros vem dos arquivos de resultados; o texto interpretativo fica em
 relatorios/final/modelo.md. Um marcador nao preenchido interrompe a geracao.
@@ -53,25 +53,20 @@ def substituicoes_t2(config, report_dir):
     runs = freeze["runs"]
     r = {}
 
-    # Resumo do T1: melhor C de cada representacao (validacao) e o lote unico de teste.
-    t1_rows = []
-    for model in t1_freeze["models"]:
-        key = model["descriptor"]
-        row = t1_test.loc[key]
-        t1_rows.append(
+    # Escolha da linha de base classica: melhor C de cada representacao na validacao.
+    # Os resultados de teste entram apenas na Tabela 4, junto com as redes.
+    r["tabela_selecao_classica"] = tabela(
+        ["Representação", "Dimensão", "C escolhido", "F1 macro val.", "Ajuste (s)"],
+        [
             [
-                NOMES[key].replace(" + SVM", ""),
+                NOMES[model["descriptor"]].replace(" + SVM", ""),
                 milhar(model["dimension"]),
                 f"{model['C']:g}".replace(".", ","),
                 br(model["validation_f1_macro"], 4),
-                br(row.accuracy, 4),
-                br(row.f1_macro, 4),
+                br(model["training_seconds"], 3),
             ]
-        )
-    dummy = t1_test.loc["majoritario"]
-    t1_rows.append(["Majoritário", "—", "—", "—", br(dummy.accuracy, 4), br(dummy.f1_macro, 4)])
-    r["tabela_t1_resumo"] = tabela(
-        ["Representação", "Dimensão", "C", "F1 macro val.", "Acurácia teste", "F1 macro teste"], t1_rows
+            for model in t1_freeze["models"]
+        ],
     )
 
     # Selecao e treino
@@ -121,7 +116,7 @@ def substituicoes_t2(config, report_dir):
         [
             [
                 NOMES[key],
-                "T1, clássico" if key in t1_test.index else "T2, rede neural",
+                "Clássica" if key in t1_test.index else "Rede neural",
                 br(row.accuracy, 4),
                 br(row.f1_macro, 4),
                 "—" if key == "majoritario" else intervalo(row),
@@ -355,6 +350,8 @@ def substituicoes_t2(config, report_dir):
     r["figuras_t2"] = Path(os.path.relpath(base / "figuras", report_dir)).as_posix()
     r["commit_t2_treino"] = freeze["provenance"]["commit"][:12]
     r["commit_t2_teste"] = evaluation["provenance"]["commit"][:12]
+    # As duas etapas usaram o mesmo ambiente; a das redes acrescenta torch e torchvision.
+    r["tabela_versoes"] = tabela(["Componente", "Versão"], evaluation["provenance"]["versions"].items())
     r["versao_torch"] = evaluation["provenance"]["versions"]["torch"]
     r["versao_torchvision"] = evaluation["provenance"]["versions"]["torchvision"]
     r["threads"] = str(evaluation["provenance"]["torch_threads"])
@@ -418,13 +415,16 @@ def relatorio_final(config):
     config_t1 = carregar_config(config["t1_config"])
     replacements = substituicoes_t1(config_t1, report_dir)
     replacements.update(substituicoes_t2(config, report_dir))
+    # Valores herdados do relatorio classico usam ponto; aqui o texto usa virgula decimal.
+    for key in ("c", "val_f1", "val_f1_combinado"):
+        replacements[key] = replacements[key].replace(".", ",")
     content = preencher(report_dir / "modelo.md", replacements)
     source = report_dir / "relatorio.md"
     source.write_text(content, encoding="utf-8")
     renderizar_pdf(
         source,
         source.with_suffix(".pdf"),
-        cabecalho="INE5443 | T1 + T2 | Ocupacao de vagas: metodos classicos e redes neurais",
-        titulo="Classificacao de ocupacao de vagas: metodos classicos e redes neurais",
+        cabecalho="INE5443 | Ocupação de vagas: de descritores clássicos a redes convolucionais",
+        titulo="Classificação de ocupação de vagas: de descritores clássicos a redes convolucionais",
         recuo=True,
     )
