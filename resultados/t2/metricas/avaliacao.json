@@ -1,0 +1,119 @@
+{
+  "primary": "cnn3_sem_s42",
+  "provenance": {
+    "utc": "2026-11-21T23:01:32.919183+00:00",
+    "commit": "94439a2a2d1c277ca0aa32608ac263d54471ec2e",
+    "tracked_dirty": true,
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+    "versions": {
+      "numpy": "2.5.4",
+      "pandas": "2.3.3",
+      "opencv-python-headless": "4.14.0.94",
+      "scikit-image": "0.26.0",
+      "scikit-learn": "1.9.1",
+      "matplotlib": "3.11.2",
+      "PyYAML": "6.0.3",
+      "torch": "2.15.0+cpu",
+      "torchvision": "0.29.2+cpu"
+    },
+    "config": {
+      "seed": 42,
+      "data_root": "data/raw/CNR-EXT",
+      "manifest": "data/manifests/t1.csv",
+      "processed_dir": "data/processed/t2",
+      "models_dir": "modelos/t2",
+      "results_dir": "resultados/t2",
+      "report_dir": "relatorios/final",
+      "t1_config": "D:\\Sandbox\\VisaoComp\\configs\\t1.yaml",
+      "image_size": [
+        128,
+        128
+      ],
+      "threads": 8,
+      "batch_size": 64,
+      "weight_decay": 0.0001,
+      "cnn": {
+        "filters": [
+          32,
+          64,
+          128
+        ],
+        "dense": 128,
+        "dropout": 0.5,
+        "lr": 0.001,
+        "max_epochs": 25,
+        "patience": 6
+      },
+      "mobilenet": {
+        "weights": "IMAGENET1K_V1",
+        "lr": 0.0001,
+        "max_epochs": 15,
+        "patience": 4
+      },
+      "augmentation": {
+        "rotation_deg": 8,
+        "zoom": [
+          0.9,
+          1.1
+        ],
+        "translate": 0.06,
+        "brightness": [
+          0.8,
+          1.2
+        ],
+        "contrast": [
+          0.8,
+          1.2
+        ]
+      },
+      "augmentation_options": [
+        "sem",
+        "com"
+      ],
+      "extra_seeds": [
+        43,
+        44
+      ],
+      "bootstrap_resamples": 2000,
+      "loco": {
+        "svm_descriptors": [
+          "lbp",
+          "combinado"
+        ],
+        "svm_c": 0.01
+      },
+      "config_path": "configs/t2.yaml"
+    },
+    "manifest_sha256": "f7ac99e8b862efdf66d50f9eb641ad29540eda7213c0ce911334bc10765e58ad",
+    "torch_threads": 8,
+    "source_sha256": {
+      "src/visao_computacional/__init__.py": "c0de7af0df6ace5a7dc53d60daac4a7db97375cdee54ec089e2068bc619aa4ba",
+      "src/visao_computacional/avaliacao.py": "8978f8a8c808e8a6bc82f65c4fe47cdb5730ab75fdf3ac754ba3632f68530250",
+      "src/visao_computacional/cli.py": "2993346099b41f3a99559c40415d5a12a1949fdc1b818e13fc8249fa57c75c06",
+      "src/visao_computacional/comparacao.py": "0c75d629c515918233018a9c2d473067aeec934ab77c62f01334817c3c5c4276",
+      "src/visao_computacional/configuracao.py": "23e7489976f5d04c12f012b3cbfa74116901681340511d7dd474fc58d9a4d050",
+      "src/visao_computacional/dados.py": "6466e58f3b013b81930bc9f9f4a5652504f82df0a45d3fda52becbddf8260351",
+      "src/visao_computacional/descritores.py": "b835aca9a26d83477088ab3ebe8c863d7926229b920f18335261b0ecebbd7dbc",
+      "src/visao_computacional/ilustracoes.py": "e86bc7c9c9b8da1f14afe5a69a34dbfbd229ca4cded8d316f61816fba6973beb",
+      "src/visao_computacional/preprocessamento.py": "939b2926852e0a99a85a813a5dbe63af82a4ccd10e453a33f88afb44809867a3",
+      "src/visao_computacional/redes.py": "232b2c4a8bee8dbdb3f054680cefaf2d9e5f45b83bff360b7f58a4fe141eab6c",
+      "src/visao_computacional/relatorio.py": "96982196098d23f490cb74520031c192f0e1f2293b8318e3e11f93005b702910",
+      "src/visao_computacional/relatorio_final.py": "f051bd8c931362941de61456d5cdecf84b455134de2863a3f5c483f86d52c68d",
+      "src/visao_computacional/t2.py": "602ac6270055f111c79ca8d1f4d9d717ddfbacc100105003f9531644dbc05238",
+      "src/visao_computacional/t2_figuras.py": "b06d89b51a58f7efc6ce77da534d4c0ce45d6b7f8aea64f9d8ef3e914b2259f8",
+      "src/visao_computacional/treinamento.py": "05a13c4af1797405d67ea6b59f558f3c111eec2bf7950515eae304765c7289c9",
+      "src/visao_computacional/visualizacao.py": "14af1b9b8e8174e9231a345bd4f72d58cff15f97e9eab91945d0d7fa25ab17e5"
+    }
+  },
+  "freeze_sha256": "ca88da78cc308f303d2963d75da790f11160d37585f918f3d0cb94ff00a1bcde",
+  "test_table_sha256": "d3796d24a466cdbf0db4a91a225c68e9fe08d30d18ae79aaa0853a1c5016a4e8",
+  "prediction_sha256": {
+    "cnn3_com_s42.csv": "e46ad9e22135dbef073ff0e96f2367795b29812e3744939874d338ed4c465c79",
+    "cnn3_sem_s42.csv": "47dedcaa9c3f76f3ef622c052b50f3f422c8758d97d9a3ca6832ce711064baea",
+    "cnn3_sem_s43.csv": "28c948182a6edbc34b6d60a30c65778aafe64dbdb2c57951496df1608d139952",
+    "cnn3_sem_s44.csv": "7290341fa82261e201e1c03347ea488a2b18eeb17773f23105beb46d5e406fa9",
+    "mobilenet_sem_s42.csv": "8772a557410a6f01210e46f74d293c92f8eef48129f2f308f03cb2d2a62fb508"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "nota": "Hashes registrados logo apos redes-treinar; o codigo ainda nao estava em commit (tracked_dirty=true no congelamento). redes.py, t2.py e configs/t2.yaml nao foram editados entre o inicio do treino e este registro.",
+  "utc": "2026-11-21T23:01:03.757406+00:00",
+  "arquivos": {
+    "src/visao_computacional/__init__.py": "c0de7af0df6ace5a7dc53d60daac4a7db97375cdee54ec089e2068bc619aa4ba",
+    "src/visao_computacional/avaliacao.py": "8978f8a8c808e8a6bc82f65c4fe47cdb5730ab75fdf3ac754ba3632f68530250",
+    "src/visao_computacional/cli.py": "2993346099b41f3a99559c40415d5a12a1949fdc1b818e13fc8249fa57c75c06",
+    "src/visao_computacional/comparacao.py": "0c75d629c515918233018a9c2d473067aeec934ab77c62f01334817c3c5c4276",
+    "src/visao_computacional/configuracao.py": "23e7489976f5d04c12f012b3cbfa74116901681340511d7dd474fc58d9a4d050",
+    "src/visao_computacional/dados.py": "6466e58f3b013b81930bc9f9f4a5652504f82df0a45d3fda52becbddf8260351",
+    "src/visao_computacional/descritores.py": "b835aca9a26d83477088ab3ebe8c863d7926229b920f18335261b0ecebbd7dbc",
+    "src/visao_computacional/ilustracoes.py": "e86bc7c9c9b8da1f14afe5a69a34dbfbd229ca4cded8d316f61816fba6973beb",
+    "src/visao_computacional/preprocessamento.py": "939b2926852e0a99a85a813a5dbe63af82a4ccd10e453a33f88afb44809867a3",
+    "src/visao_computacional/redes.py": "232b2c4a8bee8dbdb3f054680cefaf2d9e5f45b83bff360b7f58a4fe141eab6c",
+    "src/visao_computacional/relatorio.py": "96982196098d23f490cb74520031c192f0e1f2293b8318e3e11f93005b702910",
+    "src/visao_computacional/relatorio_final.py": "f051bd8c931362941de61456d5cdecf84b455134de2863a3f5c483f86d52c68d",
+    "src/visao_computacional/t2.py": "6440f8a0e684de73c5b8693dd23cb24c1b8ed5137028bcfc1992eb7053203da9",
+    "src/visao_computacional/t2_figuras.py": "b06d89b51a58f7efc6ce77da534d4c0ce45d6b7f8aea64f9d8ef3e914b2259f8",
+    "src/visao_computacional/treinamento.py": "05a13c4af1797405d67ea6b59f558f3c111eec2bf7950515eae304765c7289c9",
+    "src/visao_computacional/visualizacao.py": "14af1b9b8e8174e9231a345bd4f72d58cff15f97e9eab91945d0d7fa25ab17e5",
+    "configs/t2.yaml": "f2413176bf4e09715cab6e5acc471c0a5a0c6d14d81f97567f19e50cb0c03505"
+  },
+  "alteracoes_posteriores": [
+    "redes.py: apos o treino e o teste, o ruff trocou 'import torch.nn as nn' por 'from torch import nn' (mesmo objeto, sem efeito funcional); o hash acima corresponde a versao usada no treino."
+  ]
+}

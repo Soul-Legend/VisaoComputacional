@@ -1,0 +1,4 @@
+camera,model,training_seconds,n_train,best_epoch
+4,lbp,0.00538310000411002,6200,
+4,combinado,4.574994499998866,6200,
+4,cnn3,394.9476876999979,6200,6.0

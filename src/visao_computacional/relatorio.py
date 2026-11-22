@@ -16,7 +16,8 @@ def tabela(headers, rows):
     return "\n".join(lines)
 
 
-def escrever_markdown(config):
+def substituicoes_t1(config, report_dir):
+    """Valores do T1 lidos das evidencias congeladas, prontos para preencher um modelo."""
     evaluation = resultados_verificados(config)
     base = Path(config["results_dir"])
     read = lambda name: json.loads((base / "metricas" / name).read_text(encoding="utf-8"))
@@ -161,30 +162,51 @@ def escrever_markdown(config):
             else f"No teste, {names[ranked]} obteve o maior F1 macro. A escolha feita na validação foi mantida."
         )
     )
-    report_dir = Path(config["report_dir"])
-    report_dir.mkdir(parents=True, exist_ok=True)
-    analysis = report_dir / "analise_erros.md"
+    analysis = Path(config["report_dir"]) / "analise_erros.md"
     replacements["analise_erros"] = (
         analysis.read_text(encoding="utf-8")
         if analysis.exists()
         else "Inspeção manual dos exemplos ainda não registrada."
     )
-    template = Path(config["project_root"]) / "relatorios/t1/modelo.md"
-    content = template.read_text(encoding="utf-8")
     replacements["figuras"] = Path(os.path.relpath(base / "figuras", report_dir)).as_posix()
     replacements["ilustracoes"] = Path(
         os.path.relpath(Path(config["project_root"]) / "docs/imagens", report_dir)
     ).as_posix()
+    return replacements
+
+
+def preencher(template, replacements):
+    content = Path(template).read_text(encoding="utf-8")
     for key, value in replacements.items():
-        content = content.replace("{{" + key + "}}", value)
+        content = content.replace("{{" + key + "}}", str(value))
     if "{{" in content:
         raise ValueError("Marcador do relatorio nao preenchido")
+    return content
+
+
+def escrever_markdown(config):
+    report_dir = Path(config["report_dir"])
+    report_dir.mkdir(parents=True, exist_ok=True)
+    replacements = substituicoes_t1(config, report_dir)
+    content = preencher(Path(config["project_root"]) / "relatorios/t1/modelo.md", replacements)
     source = report_dir / "relatorio.md"
     source.write_text(content, encoding="utf-8")
     return source
 
 
-def renderizar_pdf(source, output):
+def renderizar_pdf(
+    source,
+    output,
+    cabecalho="INE5443 | T1 | Ocupacao de vagas com metodos classicos",
+    titulo="T1 - Classificacao de ocupacao de vagas",
+    recuo=False,
+):
+    """Converte o Markdown do relatorio em PDF A4.
+
+    Com recuo=True, paragrafos de texto corrido recebem recuo de primeira linha e legendas
+    (iniciadas por "Figura", "Tabela" ou "Quadro") usam estilo proprio, sem recuo.
+    Um comentario <!-- COLS 2,1,1 --> antes de uma tabela define pesos de largura das colunas.
+    """
     from markdown_it import MarkdownIt
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_JUSTIFY
@@ -203,6 +225,14 @@ def renderizar_pdf(source, output):
         )
     )
     styles.add(ParagraphStyle("CellT1", fontName="Helvetica", fontSize=8, leading=10))
+    styles.add(
+        ParagraphStyle(
+            "Legenda", fontName="Helvetica", fontSize=8.5, leading=11, alignment=TA_JUSTIFY, spaceAfter=10
+        )
+    )
+    if recuo:
+        styles["BodyT1"].firstLineIndent = 0.6 * cm
+        styles["BodyT1"].spaceAfter = 3
     styles["Title"].fontSize, styles["Title"].leading = 22, 26
     styles["Heading2"].fontSize, styles["Heading2"].leading = 15, 19
     styles["Heading2"].textColor = colors.HexColor("#173c69")
@@ -214,11 +244,13 @@ def renderizar_pdf(source, output):
             html = html.replace(f"<{a}>", f"<{b}>").replace(f"</{a}>", f"</{b}>")
         return html.replace("<code>", '<font name="Courier">').replace("</code>", "</font>")
 
-    story, i, list_depth = [], 0, 0
+    story, i, list_depth, pending_cols = [], 0, 0, None
     while i < len(tokens):
         token = tokens[i]
         if token.type == "html_block" and "PAGEBREAK" in token.content:
             story.append(PageBreak())
+        elif token.type == "html_block" and "COLS" in token.content:
+            pending_cols = [float(v) for v in token.content.split("COLS", 1)[1].split("-->")[0].split(",")]
         elif token.type == "heading_open":
             name = {"h1": "Title", "h2": "Heading2", "h3": "Heading3"}.get(token.tag, "Heading3")
             story.append(Paragraph(inline(tokens[i + 1]), styles[name]))
@@ -240,7 +272,12 @@ def renderizar_pdf(source, output):
                     )
                     story.extend([graphic, Spacer(1, 6)])
             else:
-                story.append(Paragraph(("- " if list_depth else "") + inline(child), styles["BodyT1"]))
+                text = inline(child)
+                caption = recuo and child.content.startswith(("Figura ", "Tabela ", "Quadro "))
+                style = styles["Legenda"] if caption else styles["BodyT1"]
+                if list_depth:
+                    style = ParagraphStyle("Lista", parent=style, firstLineIndent=0, leftIndent=12)
+                story.append(Paragraph((("• " if recuo else "- ") if list_depth else "") + text, style))
             i += 2
         elif token.type == "table_open":
             rows, cells = [], []
@@ -255,7 +292,9 @@ def renderizar_pdf(source, output):
                 i += 1
             column_widths = [width / len(rows[0])] * len(rows[0])
             first_header = rows[0][0].getPlainText()
-            if first_header == "Descritor":
+            if pending_cols and len(pending_cols) == len(rows[0]):
+                column_widths = [width * w / sum(pending_cols) for w in pending_cols]
+            elif first_header == "Descritor":
                 column_widths = [110] + [(width - 110) / (len(rows[0]) - 1)] * (len(rows[0]) - 1)
             elif first_header == "Clima" and len(rows[0]) == 7:
                 weights = [1.1, 1.45, 0.7, 0.7, 0.7, 1.8, 1.1]
@@ -273,14 +312,15 @@ def renderizar_pdf(source, output):
                     ]
                 )
             )
-            story.extend([table, Spacer(1, 9)])
+            story.extend([table, Spacer(1, 4 if recuo else 9)])
+            pending_cols = None
         i += 1
 
     def page(canvas, doc):
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(colors.HexColor("#536477"))
-        canvas.drawString(2 * cm, A4[1] - 1.25 * cm, "INE5443 | T1 | Ocupacao de vagas com metodos classicos")
+        canvas.drawString(2 * cm, A4[1] - 1.25 * cm, cabecalho)
         canvas.drawRightString(A4[0] - 2 * cm, 1.1 * cm, str(doc.page))
         canvas.restoreState()
 
@@ -291,7 +331,7 @@ def renderizar_pdf(source, output):
         rightMargin=2 * cm,
         topMargin=2 * cm,
         bottomMargin=1.7 * cm,
-        title="T1 - Classificacao de ocupacao de vagas",
+        title=titulo,
         author="Projeto VisaoComputacional",
     )
     doc.build(story, onFirstPage=page, onLaterPages=page)

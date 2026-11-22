@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "visao-computacional-t1"
 version = "0.1.0"
-description = "Classificacao reprodutivel de ocupacao de vagas com descritores classicos"
+description = "Classificacao reprodutivel de ocupacao de vagas: descritores classicos (T1) e CNN (T2)"
 requires-python = ">=3.11"
 dependencies = [
   "numpy>=1.26,<3", "pandas>=2.2,<3", "opencv-python-headless>=4.10,<5",
@@ -16,6 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
 report = ["reportlab>=4,<5", "markdown-it-py>=3,<5", "pypdf>=5,<7", "pypdfium2>=4,<6"]
+cnn = ["torch>=2.4", "torchvision>=0.19", "scipy>=1.11"]
 
 [project.scripts]
 visao-t1 = "visao_computacional.cli:main"
@@ -29,4 +30,8 @@ pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 110
+
+[tool.ruff.lint.per-file-ignores]
+# t2.py ficou congelado apos o treino e o teste das redes; nao alterar so por estilo.
+"src/visao_computacional/t2.py" = ["RUF059"]
 
