@@ -279,7 +279,7 @@ def confusoes(reference, predictions, output):
 def comparacao_ic(config, output):
     table = pd.read_csv(Path(config["results_dir"]) / "metricas/comparacao.csv")
     table = table[table.model != "majoritario"].sort_values("f1_macro")
-    fig, ax = plt.subplots(figsize=(7.6, 3.4))
+    fig, ax = plt.subplots(figsize=(7.6, 3.0))
     y = np.arange(len(table))
     colors = [CORES_MODELOS.get(m.split("_s")[0], LARANJA) for m in table.model]
     ax.errorbar(
@@ -297,17 +297,11 @@ def comparacao_ic(config, output):
     for xi, yi, value in zip(table.f1_high, y, table.f1_macro):
         ax.text(xi + 0.004, yi, f"{value:.3f}".replace(".", ","), va="center", fontsize=8.5)
     ax.set(yticks=y, yticklabels=table.name, xlabel="F1 macro no teste (IC 95%, bootstrap por captura)")
-    ax.set_xlim(table.f1_low.min() - 0.02, 1.0)
+    ax.set_xlim(table.f1_low.min() - 0.02, 1.02)
     ax.grid(axis="x", alpha=0.3)
     _virgula(ax, "x")
-    ax.text(
-        0.01,
-        -0.22,
-        "Quadrados: métodos clássicos (T1). Círculos: redes neurais (T2).",
-        transform=ax.transAxes,
-        fontsize=8,
-    )
-    fig.tight_layout()
+    fig.text(0.01, 0.01, "Quadrados: métodos clássicos. Círculos: redes neurais.", fontsize=8)
+    fig.tight_layout(rect=(0, 0.05, 1, 1))
     salvar_figura(fig, output / "comparacao_ic.png")
 
 
